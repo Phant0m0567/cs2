@@ -2,6 +2,7 @@
 
 #include "Aim.hpp"
 #include "Game.hpp"
+#include "Glow.hpp"
 #include "Menu.hpp"
 #include "Renderer.hpp"
 
@@ -95,6 +96,7 @@ void Entry::Unload() {
 void Entry::RunLoop() {
     while (should_run_) {
         Aim::Update();
+        Glow::Update();
         Sleep(1);
     }
 }

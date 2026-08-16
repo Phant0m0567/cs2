@@ -1,6 +1,7 @@
 #include "Menu.hpp"
 
 #include "Aim.hpp"
+#include "Glow.hpp"
 #include "Game.hpp"
 
 #include <imgui.h>
@@ -26,9 +27,24 @@ void Menu::Setup() {
 }
 
 void Menu::RenderAimTab() {
+    bool master = Aim::IsMasterEnabled();
+    if (ImGui::Checkbox("Master switch", &master)) {
+        Aim::SetMasterEnabled(master);
+    }
+
     bool enabled = Aim::IsEnabled();
     if (ImGui::Checkbox("Enable aim", &enabled)) {
         Aim::SetEnabled(enabled);
+    }
+
+    bool wallbang = Aim::IsWallbangEnabled();
+    if (ImGui::Checkbox("Enable wallbang", &wallbang)) {
+        Aim::SetWallbangEnabled(wallbang);
+    }
+
+    bool bunnyhop = Aim::IsBunnyhopEnabled();
+    if (ImGui::Checkbox("Enable bunnyhop", &bunnyhop)) {
+        Aim::SetBunnyhopEnabled(bunnyhop);
     }
 
     float aim_x = Aim::GetAimX();
@@ -44,7 +60,7 @@ void Menu::RenderAimTab() {
     Aim::SetFov(fov);
 
     ImGui::Separator();
-    ImGui::Text("Hold Mouse 5 to aim");
+    ImGui::Text("Hold Mouse 5 to aim when Aim is enabled");
     ImGui::Text("Lower smooth = faster snap");
 
     bool esp = Aim::IsEspEnabled();
@@ -78,7 +94,21 @@ void Menu::RenderAimTab() {
     ImGui::Separator();
     ImGui::Text("Spinbot ignores aim key and rotates yaw constantly.");
     ImGui::Text("Triggerbot fires when the best target is near the crosshair.");
-    ImGui::Text("Ragebot snaps instantly to the target.");
+    ImGui::Text("Ragebot snaps instantly to the target and spams shots.");
+
+    ImGui::Separator();
+    bool glow_enabled = Glow::IsEnabled();
+    if (ImGui::Checkbox("Enable Glow", &glow_enabled)) {
+        Glow::SetEnabled(glow_enabled);
+    }
+    float glow_color[4] = { Glow::GetRed(), Glow::GetGreen(), Glow::GetBlue(), Glow::GetAlpha() };
+    if (ImGui::ColorEdit4("Glow Color", glow_color)) {
+        Glow::SetColor(glow_color[0], glow_color[1], glow_color[2], glow_color[3]);
+    }
+    bool through_walls = Glow::IsThroughWalls();
+    if (ImGui::Checkbox("Glow Through Walls", &through_walls)) {
+        Glow::SetThroughWalls(through_walls);
+    }
 }
 
 void Menu::RenderStatusTab() {

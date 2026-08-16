@@ -16,6 +16,9 @@ constexpr std::uint32_t k_trigger_min_interval_ms = 80;
 }
 
 bool Aim::enabled_ = false;
+bool Aim::master_enabled_ = true;
+bool Aim::wallbang_enabled_ = false;
+bool Aim::bunnyhop_enabled_ = false;
 bool Aim::esp_enabled_ = true;
 bool Aim::spinbot_enabled_ = false;
 float Aim::spinbot_speed_ = 6.0f;
@@ -29,6 +32,7 @@ float Aim::fov_ = 8.0f;
 int Aim::aim_key_ = VK_XBUTTON2;
 
 std::uint32_t Aim::last_trigger_time_ = 0;
+std::uint32_t Aim::last_jump_time_ = 0;
 
 static ViewAngles DirectionToAngles(const Vec3& direction) {
     const float hyp = std::sqrt(direction.x * direction.x + direction.y * direction.y);
@@ -62,44 +66,64 @@ static std::uint32_t GetTickCountMs() {
         std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
+static void DoBunnyhop() {
+    const std::uint32_t now = GetTickCountMs();
+    if (now - Aim::last_jump_time_ < 140) {
+        return;
+    }
+
+    Aim::last_jump_time_ = now;
+    keybd_event(VK_SPACE, 0, 0, 0);
+    keybd_event(VK_SPACE, 0, KEYEVENTF_KEYUP, 0);
+}
+
 void Aim::Update() {
-    if (!Game::IsReady()) {
+    if (!master_enabled_ || !Game::IsReady()) {
         return;
     }
 
     const Vec3 eye = Game::GetLocalEyePosition();
     ViewAngles current = Game::GetViewAngles();
     const bool wants_aim = enabled_ && Input::IsKeyDown(aim_key_);
+    const bool rage_active = ragebot_enabled_;
+    const bool wallbang_active = wallbang_enabled_;
+    const bool auto_shoot_active = triggerbot_enabled_ || wallbang_active || rage_active;
+    const bool bunnyhop_active = bunnyhop_enabled_ || rage_active;
 
     const auto target = Game::GetBestTarget(fov_);
     if (target.has_value()) {
         const Vec3 delta = *target - eye;
         const ViewAngles desired = DirectionToAngles(delta);
 
-        if (ragebot_enabled_) {
+        if (rage_active) {
             current = desired;
         } else if (wants_aim) {
             current.yaw = ApproachAngle(current.yaw, desired.yaw, aim_x_);
             current.pitch = ApproachAngle(current.pitch, desired.pitch, aim_y_);
         }
 
-        if (triggerbot_enabled_) {
-            const float yaw_diff = std::abs(NormalizeYaw(desired.yaw - current.yaw));
-            const float pitch_diff = std::abs(desired.pitch - current.pitch);
-            const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
-            if (target_fov <= triggerbot_fov_) {
-                const std::uint32_t now = GetTickCountMs();
-                if (now - last_trigger_time_ >= k_trigger_min_interval_ms) {
-                    last_trigger_time_ = now;
-                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-                }
+        if (rage_active || spinbot_enabled_) {
+            current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
+        }
+
+        const float yaw_diff = std::abs(NormalizeYaw(desired.yaw - current.yaw));
+        const float pitch_diff = std::abs(desired.pitch - current.pitch);
+        const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
+
+        if (auto_shoot_active && target_fov <= triggerbot_fov_) {
+            const std::uint32_t now = GetTickCountMs();
+            if (now - last_trigger_time_ >= k_trigger_min_interval_ms) {
+                last_trigger_time_ = now;
+                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
             }
         }
+    } else if (rage_active) {
+        current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
     }
 
-    if (spinbot_enabled_) {
-        current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
+    if (bunnyhop_active) {
+        DoBunnyhop();
     }
 
     if (current.pitch > 89.0f) {
@@ -157,6 +181,15 @@ void Aim::RenderOverlay() {
 
 bool Aim::IsEnabled() { return enabled_; }
 void Aim::SetEnabled(bool enabled) { enabled_ = enabled; }
+
+bool Aim::IsMasterEnabled() { return master_enabled_; }
+void Aim::SetMasterEnabled(bool enabled) { master_enabled_ = enabled; }
+
+bool Aim::IsWallbangEnabled() { return wallbang_enabled_; }
+void Aim::SetWallbangEnabled(bool enabled) { wallbang_enabled_ = enabled; }
+
+bool Aim::IsBunnyhopEnabled() { return bunnyhop_enabled_; }
+void Aim::SetBunnyhopEnabled(bool enabled) { bunnyhop_enabled_ = enabled; }
 
 bool Aim::IsEspEnabled() { return esp_enabled_; }
 void Aim::SetEspEnabled(bool enabled) { esp_enabled_ = enabled; }

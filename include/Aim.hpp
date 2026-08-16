@@ -9,6 +9,12 @@ public:
 
     static bool IsEnabled();
     static void SetEnabled(bool enabled);
+    static bool IsMasterEnabled();
+    static void SetMasterEnabled(bool enabled);
+    static bool IsWallbangEnabled();
+    static void SetWallbangEnabled(bool enabled);
+    static bool IsBunnyhopEnabled();
+    static void SetBunnyhopEnabled(bool enabled);
     static bool IsEspEnabled();
     static void SetEspEnabled(bool enabled);
     static bool IsSpinbotEnabled();
@@ -35,6 +41,9 @@ public:
 
 private:
     static bool enabled_;
+    static bool master_enabled_;
+    static bool wallbang_enabled_;
+    static bool bunnyhop_enabled_;
     static bool esp_enabled_;
     static bool spinbot_enabled_;
     static float spinbot_speed_;
@@ -47,5 +56,6 @@ private:
     static float fov_;
     static int aim_key_;
 
-    static std::uint32_t last_trigger_time_; 
+    static std::uint32_t last_trigger_time_;
+    static std::uint32_t last_jump_time_;
 };
