@@ -1,4 +1,13 @@
-# cs2_math
+#this was a test i was doing with quen code to see if ai could generate working cs2 cheats, i do not claim possesion of any of this code, this was just a sideproject i wanted to try.
+
+
+
+
+
+
+
+
+#cs2-cheat
 
 Windows x64 DLL with ImGui overlay, pattern scanning utilities, and aim helpers.
 
