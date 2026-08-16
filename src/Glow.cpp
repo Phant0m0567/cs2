@@ -16,6 +16,8 @@ float Glow::green_ = 0.0f;
 float Glow::blue_ = 1.0f;
 float Glow::alpha_ = 0.6f;
 bool Glow::through_walls_ = true;
+std::uintptr_t Glow::last_glow_manager_ = 0;
+int Glow::last_glow_count_ = 0;
 
 void Glow::Update() {
     if (!enabled_) {
@@ -39,6 +41,8 @@ void Glow::Update() {
 
     const std::uintptr_t glow_object_array = Memory::Read<std::uintptr_t>(glow_manager);
     const int glow_count = Memory::Read<int>(glow_manager + sizeof(std::uintptr_t));
+    last_glow_manager_ = glow_manager;
+    last_glow_count_ = glow_count;
     if (glow_object_array == 0 || glow_count <= 0 || glow_count > 1024) {
         return;
     }
@@ -80,6 +84,14 @@ void Glow::SetEnabled(bool enabled) {
     enabled_ = enabled;
 }
 
+std::uintptr_t Glow::GetGlowManagerPtr() {
+    return last_glow_manager_;
+}
+
+int Glow::GetGlowCount() {
+    return last_glow_count_;
+}
+
 float Glow::GetRed() {
     return red_;
 }
@@ -101,10 +113,6 @@ void Glow::SetColor(float r, float g, float b, float a) {
     green_ = g;
     blue_ = b;
     alpha_ = a;
-}
-
-bool Glow::IsThroughWalls() {
-    return through_walls_;
 }
 
 void Glow::SetThroughWalls(bool through_walls) {

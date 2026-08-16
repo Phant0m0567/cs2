@@ -28,6 +28,10 @@ public:
     static std::uintptr_t GetEntity(int index);
     static std::optional<Vec3> GetEntityPosition(std::uintptr_t entity);
     static bool IsValidTarget(std::uintptr_t entity, int local_team);
+    static std::optional<int> GetBestTargetIndex(float fov_degrees);
+    static int GetLocalHealth();
+    static int GetEntityHealth(std::uintptr_t entity);
+    static int GetEntityTeam(std::uintptr_t entity);
 
     static bool WorldToScreen(const Vec3& world_pos, ImVec2& screen_pos);
 

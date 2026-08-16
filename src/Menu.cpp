@@ -121,6 +121,26 @@ void Menu::RenderStatusTab() {
     );
 }
 
+void Menu::RenderDebugTab() {
+    ImGui::Text("Glow manager: 0x%llx", static_cast<unsigned long long>(Glow::GetGlowManagerPtr()));
+    ImGui::Text("Glow count: %d", Glow::GetGlowCount());
+    ImGui::Separator();
+
+    ImGui::Text("Local health: %d", Game::GetLocalHealth());
+    ImGui::Text("Local team: %d", Game::GetLocalTeam());
+    ImGui::Separator();
+
+    const auto target_index = Game::GetBestTargetIndex(Aim::GetFov());
+    if (target_index.has_value()) {
+        const std::uintptr_t target_entity = Game::GetEntity(*target_index);
+        ImGui::Text("Closest target index: %d", *target_index);
+        ImGui::Text("Target health: %d", Game::GetEntityHealth(target_entity));
+        ImGui::Text("Target team: %d", Game::GetEntityTeam(target_entity));
+    } else {
+        ImGui::Text("Closest target index: none");
+    }
+}
+
 void Menu::RenderLogTab() {
     ImGui::BeginChild("LogScroll", ImVec2(0.0f, 0.0f), true);
     for (const std::string& line : log_lines) {
@@ -148,6 +168,11 @@ void Menu::Render() {
 
             if (ImGui::BeginTabItem("Status")) {
                 RenderStatusTab();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Debug")) {
+                RenderDebugTab();
                 ImGui::EndTabItem();
             }
 

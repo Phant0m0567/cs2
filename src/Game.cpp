@@ -156,6 +156,70 @@ bool Game::GetViewMatrix(float matrix[16]) {
     return true;
 }
 
+int Game::GetLocalHealth() {
+    if (local_player_ptr_ == 0) {
+        return 0;
+    }
+
+    return Memory::Read<int>(local_player_ptr_ + Offsets::m_i_health);
+}
+
+int Game::GetEntityHealth(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_health, sizeof(int))) {
+        return 0;
+    }
+
+    return Memory::Read<int>(entity + Offsets::m_i_health);
+}
+
+int Game::GetEntityTeam(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_team_num, sizeof(int))) {
+        return 0;
+    }
+
+    return Memory::Read<int>(entity + Offsets::m_i_team_num);
+}
+
+std::optional<int> Game::GetBestTargetIndex(float fov_degrees) {
+    if (!IsReady() || entity_list_ptr_ == 0) {
+        return std::nullopt;
+    }
+
+    const Vec3 eye = GetLocalEyePosition();
+    const ViewAngles view = GetViewAngles();
+    const int local_team = GetLocalTeam();
+
+    std::optional<int> best_index{};
+    float best_fov = fov_degrees;
+
+    for (int i = 1; i < 64; ++i) {
+        const std::uintptr_t entity = GetEntity(i);
+        if (entity == 0) {
+            continue;
+        }
+
+        if (!IsValidTarget(entity, local_team)) {
+            continue;
+        }
+
+        const auto position = GetEntityPosition(entity);
+        if (!position.has_value()) {
+            continue;
+        }
+
+        Vec3 aim_point = *position;
+        aim_point.z += 64.0f;
+
+        const float fov = GetFovToTarget(view, eye, aim_point);
+        if (fov < best_fov) {
+            best_fov = fov;
+            best_index = i;
+        }
+    }
+
+    return best_index;
+}
+
 bool Game::WorldToScreen(const Vec3& world_pos, ImVec2& screen_pos) {
     const ImGuiIO& io = ImGui::GetIO();
     if (io.DisplaySize.x <= 0.0f || io.DisplaySize.y <= 0.0f) {

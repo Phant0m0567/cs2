@@ -18,6 +18,9 @@ public:
     static bool IsThroughWalls();
     static void SetThroughWalls(bool through_walls);
 
+    static std::uintptr_t GetGlowManagerPtr();
+    static int GetGlowCount();
+
 private:
     static bool enabled_;
     static float red_;
@@ -25,4 +28,6 @@ private:
     static float blue_;
     static float alpha_;
     static bool through_walls_;
+    static std::uintptr_t last_glow_manager_;
+    static int last_glow_count_;
 };
