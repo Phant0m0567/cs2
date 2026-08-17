@@ -1,6 +1,7 @@
 #include "Entry.hpp"
 
 #include "Aim.hpp"
+#include "Config.hpp"
 #include "Game.hpp"
 #include "Glow.hpp"
 #include "Menu.hpp"
@@ -66,6 +67,7 @@ void Entry::Initialize() {
 
     if (game_initialized) {
         Menu::AddLog("client.dll loaded");
+        Config::Load();
     } else {
         Menu::AddLog("client.dll not found after wait");
     }
@@ -90,6 +92,7 @@ void Entry::Initialize() {
 }
 
 void Entry::Unload() {
+    Config::Save();
     Renderer::Shutdown();
 }
 
@@ -99,4 +102,12 @@ void Entry::RunLoop() {
         Glow::Update();
         Sleep(1);
     }
+}
+
+void Entry::RequestShutdown() {
+    should_run_ = false;
+}
+
+bool Entry::ShouldRun() {
+    return should_run_;
 }

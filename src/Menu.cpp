@@ -1,6 +1,7 @@
 #include "Menu.hpp"
 
 #include "Aim.hpp"
+#include "Config.hpp"
 #include "Glow.hpp"
 #include "Game.hpp"
 
@@ -91,6 +92,11 @@ void Menu::RenderAimTab() {
         Aim::SetRagebotEnabled(ragebot);
     }
 
+    bool recoil = Aim::IsRecoilCompensationEnabled();
+    if (ImGui::Checkbox("Enable recoil compensation", &recoil)) {
+        Aim::SetRecoilCompensationEnabled(recoil);
+    }
+
     ImGui::Separator();
     ImGui::Text("Spinbot ignores aim key and rotates yaw constantly.");
     ImGui::Text("Triggerbot fires when the best target is near the crosshair.");
@@ -109,11 +115,34 @@ void Menu::RenderAimTab() {
     if (ImGui::Checkbox("Glow Through Walls", &through_walls)) {
         Glow::SetThroughWalls(through_walls);
     }
+
+    ImGui::Separator();
+    if (ImGui::Button("Save config")) {
+        Config::Save();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load config")) {
+        Config::Load();
+    }
 }
 
 void Menu::RenderStatusTab() {
     ImGui::Text("Game ready: %s", Game::IsReady() ? "yes" : "no");
     ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Separator();
+    ImGui::Text("Master enabled: %s", Aim::IsMasterEnabled() ? "yes" : "no");
+    ImGui::Text("Aimbot enabled: %s", Aim::IsEnabled() ? "yes" : "no");
+    ImGui::Text("Recoil compensation: %s", Aim::IsRecoilCompensationEnabled() ? "yes" : "no");
+    ImGui::Separator();
+    const auto target_index = Game::GetBestTargetIndex(Aim::GetFov());
+    if (target_index.has_value()) {
+        const std::uintptr_t target_entity = Game::GetEntity(*target_index);
+        ImGui::Text("Best target index: %d", *target_index);
+        ImGui::Text("Target health: %d", Game::GetEntityHealth(target_entity));
+        ImGui::Text("Target team: %d", Game::GetEntityTeam(target_entity));
+    } else {
+        ImGui::Text("Best target index: none");
+    }
     ImGui::Separator();
     ImGui::TextWrapped(
         "Set offsets in include/Offsets.hpp after each CS2 update. "
@@ -122,8 +151,8 @@ void Menu::RenderStatusTab() {
 }
 
 void Menu::RenderDebugTab() {
-    ImGui::Text("Glow manager: 0x%llx", static_cast<unsigned long long>(Glow::GetGlowManagerPtr()));
-    ImGui::Text("Glow count: %d", Glow::GetGlowCount());
+    ImGui::Text("Glow property: 0x%llx", static_cast<unsigned long long>(Glow::GetGlowPointer()));
+    ImGui::Text("Glow writes: %d", Glow::GetGlowCount());
     ImGui::Separator();
 
     ImGui::Text("Local health: %d", Game::GetLocalHealth());

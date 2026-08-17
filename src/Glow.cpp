@@ -7,7 +7,14 @@
 #include <cstdint>
 
 namespace {
-constexpr std::uintptr_t kGlowObjectSize = 0x38;
+constexpr std::uintptr_t kGlowPropertySize = 0x80;
+constexpr std::uintptr_t kGlowColorOffset = 0x8;
+constexpr std::uintptr_t kGlowAlphaOffset = 0x14;
+constexpr std::uintptr_t kGlowTypeOffset = 0x30; // conservative placeholder
+constexpr std::uintptr_t kGlowTeamOffset = 0x34;
+constexpr std::uintptr_t kGlowColorOverrideOffset = 0x40;
+constexpr std::uintptr_t kGlowEnabledOffset = 0x51;
+constexpr std::uintptr_t kGlowHighlightOffset = 0x50;
 }
 
 bool Glow::enabled_ = false;
@@ -16,7 +23,7 @@ float Glow::green_ = 0.0f;
 float Glow::blue_ = 1.0f;
 float Glow::alpha_ = 0.6f;
 bool Glow::through_walls_ = true;
-std::uintptr_t Glow::last_glow_manager_ = 0;
+std::uintptr_t Glow::last_glow_property_ = 0;
 int Glow::last_glow_count_ = 0;
 
 void Glow::Update() {
@@ -24,55 +31,28 @@ void Glow::Update() {
         return;
     }
 
-    const std::uintptr_t client_base = Memory::GetModuleBase("client.dll");
-    if (client_base == 0 || Offsets::glow_object_manager == 0 || Offsets::m_iGlowIndex == 0) {
-        return;
-    }
-
-    const std::uintptr_t glow_manager_ptr = client_base + Offsets::glow_object_manager;
-    if (!Memory::IsReadable(glow_manager_ptr, sizeof(std::uintptr_t))) {
-        return;
-    }
-
-    const std::uintptr_t glow_manager = Memory::Read<std::uintptr_t>(glow_manager_ptr);
-    if (glow_manager == 0 || !Memory::IsReadable(glow_manager, sizeof(std::uintptr_t) + sizeof(int))) {
-        return;
-    }
-
-    const std::uintptr_t glow_object_array = Memory::Read<std::uintptr_t>(glow_manager);
-    const int glow_count = Memory::Read<int>(glow_manager + sizeof(std::uintptr_t));
-    last_glow_manager_ = glow_manager;
-    last_glow_count_ = glow_count;
-    if (glow_object_array == 0 || glow_count <= 0 || glow_count > 1024) {
-        return;
-    }
-
     const int local_team = Game::GetLocalTeam();
-
     for (int i = 1; i < 64; ++i) {
         const std::uintptr_t entity = Game::GetEntity(i);
         if (entity == 0 || !Game::IsValidTarget(entity, local_team)) {
             continue;
         }
 
-        const int glow_index = Memory::Read<int>(entity + Offsets::m_iGlowIndex);
-        if (glow_index < 0 || glow_index >= glow_count) {
+        const std::uintptr_t glow_property = entity + Offsets::m_Glow;
+        if (!Memory::IsReadable(glow_property, kGlowPropertySize)) {
             continue;
         }
 
-        const std::uintptr_t glow_object = glow_object_array + static_cast<std::uintptr_t>(glow_index) * kGlowObjectSize;
-        if (!Memory::IsReadable(glow_object, kGlowObjectSize)) {
-            continue;
-        }
+        last_glow_property_ = glow_property;
+        last_glow_count_++;
 
-        Memory::Write<float>(glow_object + 0x8, red_);
-        Memory::Write<float>(glow_object + 0xC, green_);
-        Memory::Write<float>(glow_object + 0x10, blue_);
-        Memory::Write<float>(glow_object + 0x14, alpha_);
-        Memory::Write<uint8_t>(glow_object + 0x18, through_walls_ ? 1 : 0);
-        Memory::Write<uint8_t>(glow_object + 0x19, 1);
-        Memory::Write<uint8_t>(glow_object + 0x1A, 0);
-        Memory::Write<uint8_t>(glow_object + 0x1B, 0);
+        Memory::Write<Vec3>(glow_property + kGlowColorOffset, {red_, green_, blue_});
+        Memory::Write<float>(glow_property + kGlowAlphaOffset, alpha_);
+        Memory::Write<int>(glow_property + kGlowTypeOffset, through_walls_ ? 2 : 0);
+        Memory::Write<int>(glow_property + kGlowTeamOffset, 0);
+        Memory::Write<Vec3>(glow_property + kGlowColorOverrideOffset, {red_, green_, blue_});
+        Memory::Write<bool>(glow_property + kGlowHighlightOffset, true);
+        Memory::Write<bool>(glow_property + kGlowEnabledOffset, true);
     }
 }
 
@@ -84,8 +64,8 @@ void Glow::SetEnabled(bool enabled) {
     enabled_ = enabled;
 }
 
-std::uintptr_t Glow::GetGlowManagerPtr() {
-    return last_glow_manager_;
+std::uintptr_t Glow::GetGlowPointer() {
+    return last_glow_property_;
 }
 
 int Glow::GetGlowCount() {

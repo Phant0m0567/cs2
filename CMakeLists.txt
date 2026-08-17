@@ -64,6 +64,7 @@ target_include_directories(minhook_lib PUBLIC
 add_library(cs2_math SHARED
     src/dllmain.cpp
     src/Entry.cpp
+    src/Config.cpp
     src/Memory.cpp
     src/Renderer.cpp
     src/Menu.cpp

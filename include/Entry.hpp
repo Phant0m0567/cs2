@@ -6,6 +6,8 @@ class Entry {
 public:
     static bool OnAttach(HMODULE module);
     static void OnDetach(bool process_terminating);
+    static void RequestShutdown();
+    static bool ShouldRun();
 
 private:
     static DWORD WINAPI ThreadProc(LPVOID param);

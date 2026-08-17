@@ -137,7 +137,7 @@ int Game::GetLocalTeam() {
         return 0;
     }
 
-    return Memory::Read<int>(local_player_ptr_ + Offsets::m_i_team_num);
+    return static_cast<int>(Memory::Read<std::uint8_t>(local_player_ptr_ + Offsets::m_i_team_num));
 }
 
 bool Game::GetViewMatrix(float matrix[16]) {
@@ -173,11 +173,46 @@ int Game::GetEntityHealth(std::uintptr_t entity) {
 }
 
 int Game::GetEntityTeam(std::uintptr_t entity) {
-    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_team_num, sizeof(int))) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_team_num, sizeof(std::uint8_t))) {
         return 0;
     }
 
-    return Memory::Read<int>(entity + Offsets::m_i_team_num);
+    return static_cast<int>(Memory::Read<std::uint8_t>(entity + Offsets::m_i_team_num));
+}
+
+bool Game::IsEntityDormant(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_bDormant, sizeof(bool))) {
+        return false;
+    }
+    return Memory::Read<bool>(entity + Offsets::m_bDormant);
+}
+
+bool Game::HasGunGameImmunity(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_bGunGameImmunity, sizeof(bool))) {
+        return false;
+    }
+    return Memory::Read<bool>(entity + Offsets::m_bGunGameImmunity);
+}
+
+bool Game::IsEntityAlive(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_health, sizeof(int))) {
+        return false;
+    }
+    const int health = Memory::Read<int>(entity + Offsets::m_i_health);
+    return health > 0;
+}
+
+Vec3 Game::GetLocalViewPunch() {
+    if (local_player_ptr_ == 0 || !Memory::IsReadable(local_player_ptr_ + Offsets::m_pCameraServices, sizeof(std::uintptr_t))) {
+        return {};
+    }
+
+    const std::uintptr_t camera_services = Memory::Read<std::uintptr_t>(local_player_ptr_ + Offsets::m_pCameraServices);
+    if (camera_services == 0 || !Memory::IsReadable(camera_services + Offsets::m_vec_cs_view_punch, sizeof(Vec3))) {
+        return {};
+    }
+
+    return Memory::Read<Vec3>(camera_services + Offsets::m_vec_cs_view_punch);
 }
 
 std::optional<int> Game::GetBestTargetIndex(float fov_degrees) {
@@ -279,16 +314,11 @@ bool Game::IsValidTarget(std::uintptr_t entity, int local_team) {
         return false;
     }
 
-    if (!Memory::IsReadable(entity + Offsets::m_i_health, sizeof(int))) {
+    if (IsEntityDormant(entity) || HasGunGameImmunity(entity) || !IsEntityAlive(entity)) {
         return false;
     }
 
-    const int health = Memory::Read<int>(entity + Offsets::m_i_health);
-    if (health <= 0) {
-        return false;
-    }
-
-    const int team = Memory::Read<int>(entity + Offsets::m_i_team_num);
+    const int team = GetEntityTeam(entity);
     if (team == local_team || team == 0) {
         return false;
     }

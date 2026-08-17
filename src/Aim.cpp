@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <chrono>
+#include <string>
 
 namespace {
 constexpr float k_pi = 3.14159265358979323846f;
@@ -25,6 +26,7 @@ float Aim::spinbot_speed_ = 6.0f;
 bool Aim::triggerbot_enabled_ = false;
 float Aim::triggerbot_fov_ = 3.0f;
 bool Aim::ragebot_enabled_ = false;
+bool Aim::recoil_compensation_enabled_ = false;
 
 float Aim::aim_x_ = 4.0f;
 float Aim::aim_y_ = 4.0f;
@@ -93,21 +95,27 @@ void Aim::Update() {
     const auto target = Game::GetBestTarget(fov_);
     if (target.has_value()) {
         const Vec3 delta = *target - eye;
-        const ViewAngles desired = DirectionToAngles(delta);
+        ViewAngles aim_angles = DirectionToAngles(delta);
 
-        if (rage_active) {
-            current = desired;
-        } else if (wants_aim) {
-            current.yaw = ApproachAngle(current.yaw, desired.yaw, aim_x_);
-            current.pitch = ApproachAngle(current.pitch, desired.pitch, aim_y_);
+        if (recoil_compensation_enabled_) {
+            const Vec3 punch = Game::GetLocalViewPunch();
+            aim_angles.pitch -= punch.x;
+            aim_angles.yaw -= punch.y;
         }
 
-        if (rage_active || spinbot_enabled_) {
+        if (rage_active) {
+            current = aim_angles;
+        } else if (wants_aim) {
+            current.yaw = ApproachAngle(current.yaw, aim_angles.yaw, aim_x_);
+            current.pitch = ApproachAngle(current.pitch, aim_angles.pitch, aim_y_);
+        }
+
+        if (spinbot_enabled_) {
             current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
         }
 
-        const float yaw_diff = std::abs(NormalizeYaw(desired.yaw - current.yaw));
-        const float pitch_diff = std::abs(desired.pitch - current.pitch);
+        const float yaw_diff = std::abs(NormalizeYaw(aim_angles.yaw - current.yaw));
+        const float pitch_diff = std::abs(aim_angles.pitch - current.pitch);
         const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
 
         if (auto_shoot_active && target_fov <= triggerbot_fov_) {
@@ -118,7 +126,7 @@ void Aim::Update() {
                 mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
             }
         }
-    } else if (rage_active) {
+    } else if (rage_active || spinbot_enabled_) {
         current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
     }
 
@@ -174,8 +182,12 @@ void Aim::RenderOverlay() {
         const ImVec2 top_left{screen_head.x - width * 0.5f, screen_head.y};
         const ImVec2 bottom_right{screen_head.x + width * 0.5f, screen_foot.y};
 
-        ImGui::GetWindowDrawList()->AddRect(top_left, bottom_right, IM_COL32(255, 0, 0, 255), 2.0f, 0, 1.5f);
-        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 14.0f), IM_COL32(255, 255, 255, 255), "Enemy");
+        const ImU32 box_color = IM_COL32(255, 64, 64, 220);
+        ImGui::GetWindowDrawList()->AddRect(top_left, bottom_right, box_color, 0.0f, 0, 2.0f);
+        ImGui::GetWindowDrawList()->AddLine(screen_head, screen_foot, box_color, 1.5f);
+        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 18.0f), IM_COL32(255, 255, 255, 220), "Enemy");
+        const std::string health_text = "HP: " + std::to_string(Game::GetEntityHealth(entity));
+        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 34.0f), IM_COL32(255, 255, 64, 200), health_text.c_str());
     }
 }
 
@@ -208,6 +220,9 @@ void Aim::SetTriggerbotFov(float fov) { triggerbot_fov_ = fov; }
 
 bool Aim::IsRagebotEnabled() { return ragebot_enabled_; }
 void Aim::SetRagebotEnabled(bool enabled) { ragebot_enabled_ = enabled; }
+
+bool Aim::IsRecoilCompensationEnabled() { return recoil_compensation_enabled_; }
+void Aim::SetRecoilCompensationEnabled(bool enabled) { recoil_compensation_enabled_ = enabled; }
 
 float Aim::GetAimX() { return aim_x_; }
 float Aim::GetAimY() { return aim_y_; }

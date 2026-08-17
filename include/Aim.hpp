@@ -27,6 +27,8 @@ public:
     static void SetTriggerbotFov(float fov);
     static bool IsRagebotEnabled();
     static void SetRagebotEnabled(bool enabled);
+    static bool IsRecoilCompensationEnabled();
+    static void SetRecoilCompensationEnabled(bool enabled);
 
     static float GetAimX();
     static float GetAimY();
@@ -55,6 +57,7 @@ private:
     static float aim_y_;
     static float fov_;
     static int aim_key_;
+    static bool recoil_compensation_enabled_;
 
     static std::uint32_t last_trigger_time_;
     static std::uint32_t last_jump_time_;

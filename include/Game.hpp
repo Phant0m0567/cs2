@@ -32,6 +32,10 @@ public:
     static int GetLocalHealth();
     static int GetEntityHealth(std::uintptr_t entity);
     static int GetEntityTeam(std::uintptr_t entity);
+    static bool IsEntityDormant(std::uintptr_t entity);
+    static bool HasGunGameImmunity(std::uintptr_t entity);
+    static bool IsEntityAlive(std::uintptr_t entity);
+    static Vec3 GetLocalViewPunch();
 
     static bool WorldToScreen(const Vec3& world_pos, ImVec2& screen_pos);
 

@@ -3,15 +3,22 @@
 #include <cstdint>
 
 namespace Offsets {
-    inline std::uintptr_t entity_list = 0;
-    inline std::uintptr_t local_player = 0;
-    inline std::uintptr_t view_angles = 0;
-    inline std::uintptr_t view_matrix = 0;
-    inline std::uintptr_t glow_object_manager = 0;
+    inline std::uintptr_t entity_list = 0x025D5B30;          // dwEntityList
+    inline std::uintptr_t local_player = 0x023A1398;         // dwLocalPlayerPawn
+    inline std::uintptr_t view_angles = 0x023F76A8;          // dwViewAngles
+    inline std::uintptr_t view_matrix = 0x023CB6F0;          // dwViewMatrix
+    inline std::uintptr_t glow_object_manager = 0x02397058;  // dwGlowManager
 
-    inline std::uintptr_t m_vec_origin = 0x88;
-    inline std::uintptr_t m_vec_view_offset = 0x108;
-    inline std::uintptr_t m_i_team_num = 0x3BF;
-    inline std::uintptr_t m_i_health = 0x32C;
-    inline std::uintptr_t m_iGlowIndex = 0;
+    inline std::uintptr_t m_vec_origin = 0x80;               // CGameSceneNode::m_vecOrigin (fallback origin offset)
+    inline std::uintptr_t m_vec_view_offset = 0xE78;         // C_BaseModelEntity::m_vecViewOffset
+    inline std::uintptr_t m_i_team_num = 0x3E7;              // C_BaseEntity::m_iTeamNum
+    inline std::uintptr_t m_i_health = 0x34C;                // C_BaseEntity::m_iHealth
+    inline std::uintptr_t m_Glow = 0xDE0;                    // C_BaseModelEntity::m_Glow
+    inline std::uintptr_t m_bDormant = 0x103;                // CGameSceneNode::m_bDormant
+    inline std::uintptr_t m_bGunGameImmunity = 0x3258;       // C_CSPlayerPawn::m_bGunGameImmunity
+    inline std::uintptr_t m_pCameraServices = 0x1240;        // C_BasePlayerPawn::m_pCameraServices
+    inline std::uintptr_t m_vec_cs_view_punch = 0x48;        // CPlayer_CameraServices::m_vecCsViewPunchAngle
+    inline std::uintptr_t m_pWeaponServices = 0x1208;        // C_BasePlayerPawn::m_pWeaponServices
+    inline std::uintptr_t m_hActiveWeapon = 0x60;            // CPlayer_WeaponServices::m_hActiveWeapon
+    inline std::uintptr_t m_fFlags = 0x3F4;                   // C_BaseEntity::m_fFlags
 }
