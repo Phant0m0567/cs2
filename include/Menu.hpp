@@ -15,6 +15,7 @@ public:
 private:
     static void RenderAimTab();
     static void RenderStatusTab();
+    static void RenderSettingsTab();
     static void RenderDebugTab();
     static void RenderLogTab();
 

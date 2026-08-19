@@ -211,6 +211,34 @@ void Menu::RenderStatusTab() {
     );
 }
 
+void Menu::RenderSettingsTab() {
+    static char profile_name[64] = "default";
+
+    ImGui::Text("Current profile: %s", Config::GetCurrentProfile().c_str());
+    ImGui::InputText("Profile name", profile_name, sizeof(profile_name));
+    if (ImGui::Button("Save profile")) {
+        Config::SaveProfile(profile_name);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load profile")) {
+        Config::LoadProfile(profile_name);
+    }
+
+    ImGui::Separator();
+    bool bomb_overlay = Aim::IsBombOverlayEnabled();
+    if (ImGui::Checkbox("Enable bomb overlay", &bomb_overlay)) {
+        Aim::SetBombOverlayEnabled(bomb_overlay);
+    }
+
+    bool hostage_overlay = Aim::IsHostageOverlayEnabled();
+    if (ImGui::Checkbox("Enable hostage overlay", &hostage_overlay)) {
+        Aim::SetHostageOverlayEnabled(hostage_overlay);
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Customize overlay and profile behavior here.");
+}
+
 void Menu::RenderDebugTab() {
     ImGui::Text("Glow property: 0x%llx", static_cast<unsigned long long>(Glow::GetGlowPointer()));
     ImGui::Text("Glow writes: %d", Glow::GetGlowCount());
@@ -258,6 +286,11 @@ void Menu::Render() {
 
             if (ImGui::BeginTabItem("Status")) {
                 RenderStatusTab();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Settings")) {
+                RenderSettingsTab();
                 ImGui::EndTabItem();
             }
 

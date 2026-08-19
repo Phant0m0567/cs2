@@ -41,27 +41,26 @@ public:
     static void SetAimBone(Bone bone);
     static bool IsAutoStopEnabled();
     static void SetAutoStopEnabled(bool enabled);
-    static bool IsAutoStopWhenShootingEnabled();
-    static void SetAutoStopWhenShootingEnabled(bool enabled);
     static bool IsAutoScopeEnabled();
     static void SetAutoScopeEnabled(bool enabled);
     static bool IsAutoPistolEnabled();
     static void SetAutoPistolEnabled(bool enabled);
     static bool IsRapidFireEnabled();
     static void SetRapidFireEnabled(bool enabled);
-    static int GetTriggerDelay();
-    static void SetTriggerDelay(int delay_ms);
     static bool IsNoRecoilEnabled();
     static void SetNoRecoilEnabled(bool enabled);
     static bool IsNoSpreadEnabled();
     static void SetNoSpreadEnabled(bool enabled);
     static bool IsNoScopeInaccuracyEnabled();
     static void SetNoScopeInaccuracyEnabled(bool enabled);
+    static bool IsBombOverlayEnabled();
+    static void SetBombOverlayEnabled(bool enabled);
+    static bool IsHostageOverlayEnabled();
+    static void SetHostageOverlayEnabled(bool enabled);
+    static bool IsAutoStrafeEnabled();
+    static void SetAutoStrafeEnabled(bool enabled);
     static bool IsPanicKeyEnabled();
     static void SetPanicKeyEnabled(bool enabled);
-    static int GetPanicKey();
-    static void SetPanicKey(int virtual_key);
-    static void ResetDefaults();
 
     static float GetAimX();
     static float GetAimY();
@@ -101,9 +100,8 @@ private:
     static float aim_y_;
     static float fov_;
     static int aim_key_;
-    static int panic_key_;
-    static int trigger_delay_ms_;
-    static bool auto_stop_when_shooting_;
+    static bool bomb_overlay_enabled_;
+    static bool hostage_overlay_enabled_;
     static bool recoil_compensation_enabled_;
 
     static std::uint32_t last_trigger_time_;

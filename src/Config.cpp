@@ -8,67 +8,86 @@
 
 namespace {
     const char* kConfigFileName = "cs2_math.cfg";
+
+    std::string GetProfileFileName(const std::string& profile_name) {
+        if (profile_name.empty() || profile_name == "default") {
+            return std::string(kConfigFileName);
+        }
+        return "cs2_math_" + profile_name + ".cfg";
+    }
+
+    bool ParseBool(const std::string& value) {
+        return value == "1" || value == "true";
+    }
 }
 
-void Config::Load() {
-    std::ifstream config(kConfigFileName);
+std::string Config::current_profile_ = "default";
+
+bool Config::LoadFromFile(const std::string& file_name) {
+    std::ifstream config(file_name);
     if (!config.is_open()) {
-        return;
+        return false;
     }
 
     std::string line;
     while (std::getline(config, line)) {
-        if (line.rfind("master=", 0) == 0) {
-            Aim::SetMasterEnabled(line.substr(7) == "1");
+        if (line.rfind("profile=", 0) == 0) {
+            current_profile_ = line.substr(8);
+        } else if (line.rfind("master=", 0) == 0) {
+            Aim::SetMasterEnabled(ParseBool(line.substr(7)));
         } else if (line.rfind("aim=", 0) == 0) {
-            Aim::SetEnabled(line.substr(4) == "1");
+            Aim::SetEnabled(ParseBool(line.substr(4)));
         } else if (line.rfind("wallbang=", 0) == 0) {
-            Aim::SetWallbangEnabled(line.substr(9) == "1");
+            Aim::SetWallbangEnabled(ParseBool(line.substr(9)));
         } else if (line.rfind("bunnyhop=", 0) == 0) {
-            Aim::SetBunnyhopEnabled(line.substr(9) == "1");
+            Aim::SetBunnyhopEnabled(ParseBool(line.substr(9)));
         } else if (line.rfind("esp=", 0) == 0) {
-            Aim::SetEspEnabled(line.substr(4) == "1");
+            Aim::SetEspEnabled(ParseBool(line.substr(4)));
         } else if (line.rfind("spinbot=", 0) == 0) {
-            Aim::SetSpinbotEnabled(line.substr(8) == "1");
+            Aim::SetSpinbotEnabled(ParseBool(line.substr(8)));
         } else if (line.rfind("spinbot_speed=", 0) == 0) {
             Aim::SetSpinbotSpeed(std::stof(line.substr(14)));
         } else if (line.rfind("triggerbot=", 0) == 0) {
-            Aim::SetTriggerbotEnabled(line.substr(11) == "1");
+            Aim::SetTriggerbotEnabled(ParseBool(line.substr(11)));
         } else if (line.rfind("triggerbot_fov=", 0) == 0) {
             Aim::SetTriggerbotFov(std::stof(line.substr(14)));
         } else if (line.rfind("ragebot=", 0) == 0) {
-            Aim::SetRagebotEnabled(line.substr(8) == "1");
+            Aim::SetRagebotEnabled(ParseBool(line.substr(8)));
         } else if (line.rfind("legit=", 0) == 0) {
-            Aim::SetLegitModeEnabled(line.substr(6) == "1");
+            Aim::SetLegitModeEnabled(ParseBool(line.substr(6)));
         } else if (line.rfind("aim_bone=", 0) == 0) {
             const int bone = std::stoi(line.substr(9));
             if (bone >= 0 && bone <= 4) {
                 Aim::SetAimBone(static_cast<Aim::Bone>(bone));
             }
         } else if (line.rfind("auto_stop=", 0) == 0) {
-            Aim::SetAutoStopEnabled(line.substr(10) == "1");
+            Aim::SetAutoStopEnabled(ParseBool(line.substr(10)));
         } else if (line.rfind("auto_scope=", 0) == 0) {
-            Aim::SetAutoScopeEnabled(line.substr(11) == "1");
+            Aim::SetAutoScopeEnabled(ParseBool(line.substr(11)));
         } else if (line.rfind("auto_pistol=", 0) == 0) {
-            Aim::SetAutoPistolEnabled(line.substr(12) == "1");
+            Aim::SetAutoPistolEnabled(ParseBool(line.substr(12)));
         } else if (line.rfind("rapid_fire=", 0) == 0) {
-            Aim::SetRapidFireEnabled(line.substr(11) == "1");
+            Aim::SetRapidFireEnabled(ParseBool(line.substr(11)));
         } else if (line.rfind("no_recoil=", 0) == 0) {
-            Aim::SetNoRecoilEnabled(line.substr(10) == "1");
+            Aim::SetNoRecoilEnabled(ParseBool(line.substr(10)));
         } else if (line.rfind("no_spread=", 0) == 0) {
-            Aim::SetNoSpreadEnabled(line.substr(11) == "1");
+            Aim::SetNoSpreadEnabled(ParseBool(line.substr(11)));
         } else if (line.rfind("no_scope_inaccuracy=", 0) == 0) {
-            Aim::SetNoScopeInaccuracyEnabled(line.substr(20) == "1");
+            Aim::SetNoScopeInaccuracyEnabled(ParseBool(line.substr(20)));
+        } else if (line.rfind("bomb_overlay=", 0) == 0) {
+            Aim::SetBombOverlayEnabled(ParseBool(line.substr(13)));
+        } else if (line.rfind("hostage_overlay=", 0) == 0) {
+            Aim::SetHostageOverlayEnabled(ParseBool(line.substr(15)));
         } else if (line.rfind("auto_strafe=", 0) == 0) {
-            Aim::SetAutoStrafeEnabled(line.substr(12) == "1");
+            Aim::SetAutoStrafeEnabled(ParseBool(line.substr(12)));
         } else if (line.rfind("panic_key=", 0) == 0) {
-            Aim::SetPanicKeyEnabled(line.substr(10) == "1");
+            Aim::SetPanicKeyEnabled(ParseBool(line.substr(10)));
         } else if (line.rfind("recoil=", 0) == 0) {
-            Aim::SetRecoilCompensationEnabled(line.substr(7) == "1");
+            Aim::SetRecoilCompensationEnabled(ParseBool(line.substr(7)));
         } else if (line.rfind("glow=", 0) == 0) {
-            Glow::SetEnabled(line.substr(5) == "1");
+            Glow::SetEnabled(ParseBool(line.substr(5)));
         } else if (line.rfind("hostage_glow=", 0) == 0) {
-            Glow::SetHostageGlowEnabled(line.substr(12) == "1");
+            Glow::SetHostageGlowEnabled(ParseBool(line.substr(12)));
         } else if (line.rfind("glow_color=", 0) == 0) {
             const auto values = line.substr(11);
             const size_t first = values.find(',');
@@ -87,17 +106,20 @@ void Config::Load() {
                 }
             }
         } else if (line.rfind("glow_through_walls=", 0) == 0) {
-            Glow::SetThroughWalls(line.substr(18) == "1");
+            Glow::SetThroughWalls(ParseBool(line.substr(18)));
         }
     }
+
+    return true;
 }
 
-void Config::Save() {
-    std::ofstream config(kConfigFileName, std::ios::trunc);
+void Config::SaveToFile(const std::string& file_name) {
+    std::ofstream config(file_name, std::ios::trunc);
     if (!config.is_open()) {
         return;
     }
 
+    config << "profile=" << current_profile_ << '\n';
     config << "master=" << (Aim::IsMasterEnabled() ? 1 : 0) << '\n';
     config << "aim=" << (Aim::IsEnabled() ? 1 : 0) << '\n';
     config << "wallbang=" << (Aim::IsWallbangEnabled() ? 1 : 0) << '\n';
@@ -117,6 +139,8 @@ void Config::Save() {
     config << "no_recoil=" << (Aim::IsNoRecoilEnabled() ? 1 : 0) << '\n';
     config << "no_spread=" << (Aim::IsNoSpreadEnabled() ? 1 : 0) << '\n';
     config << "no_scope_inaccuracy=" << (Aim::IsNoScopeInaccuracyEnabled() ? 1 : 0) << '\n';
+    config << "bomb_overlay=" << (Aim::IsBombOverlayEnabled() ? 1 : 0) << '\n';
+    config << "hostage_overlay=" << (Aim::IsHostageOverlayEnabled() ? 1 : 0) << '\n';
     config << "auto_strafe=" << (Aim::IsAutoStrafeEnabled() ? 1 : 0) << '\n';
     config << "panic_key=" << (Aim::IsPanicKeyEnabled() ? 1 : 0) << '\n';
     config << "recoil=" << (Aim::IsRecoilCompensationEnabled() ? 1 : 0) << '\n';
@@ -124,4 +148,30 @@ void Config::Save() {
     config << "hostage_glow=" << (Glow::IsHostageGlowEnabled() ? 1 : 0) << '\n';
     config << "glow_color=" << Glow::GetRed() << ',' << Glow::GetGreen() << ',' << Glow::GetBlue() << ',' << Glow::GetAlpha() << '\n';
     config << "glow_through_walls=" << (Glow::IsThroughWalls() ? 1 : 0) << '\n';
+}
+
+void Config::Load() {
+    current_profile_ = "default";
+    LoadFromFile(kConfigFileName);
+}
+
+void Config::Save() {
+    SaveToFile(GetProfileFileName(current_profile_));
+}
+
+void Config::LoadProfile(const std::string& profile_name) {
+    const std::string file_name = GetProfileFileName(profile_name);
+    if (LoadFromFile(file_name)) {
+        current_profile_ = profile_name.empty() ? "default" : profile_name;
+    }
+}
+
+void Config::SaveProfile(const std::string& profile_name) {
+    current_profile_ = profile_name.empty() ? "default" : profile_name;
+    const std::string file_name = GetProfileFileName(current_profile_);
+    SaveToFile(file_name);
+}
+
+const std::string& Config::GetCurrentProfile() {
+    return current_profile_;
 }

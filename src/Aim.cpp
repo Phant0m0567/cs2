@@ -29,13 +29,14 @@ bool Aim::ragebot_enabled_ = false;
 bool Aim::legit_mode_enabled_ = true;
 Aim::Bone Aim::aim_bone_ = Aim::Bone::Head;
 bool Aim::auto_stop_enabled_ = true;
-bool Aim::auto_stop_when_shooting_ = false;
 bool Aim::auto_scope_enabled_ = false;
 bool Aim::auto_pistol_enabled_ = false;
 bool Aim::rapid_fire_enabled_ = false;
 bool Aim::no_recoil_enabled_ = false;
 bool Aim::no_spread_enabled_ = false;
 bool Aim::no_scope_inaccuracy_enabled_ = false;
+bool Aim::bomb_overlay_enabled_ = true;
+bool Aim::hostage_overlay_enabled_ = true;
 bool Aim::auto_strafe_enabled_ = false;
 bool Aim::panic_key_enabled_ = true;
 bool Aim::recoil_compensation_enabled_ = false;
@@ -44,8 +45,6 @@ float Aim::aim_x_ = 4.0f;
 float Aim::aim_y_ = 4.0f;
 float Aim::fov_ = 8.0f;
 int Aim::aim_key_ = VK_XBUTTON2;
-int Aim::panic_key_ = VK_END;
-int Aim::trigger_delay_ms_ = 0;
 
 std::uint32_t Aim::last_trigger_time_ = 0;
 std::uint32_t Aim::last_jump_time_ = 0;
@@ -173,7 +172,7 @@ void Aim::Update() {
             const float pitch_diff = std::abs(aim_angles.pitch - current.pitch);
             const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
 
-            if (auto_stop_enabled_ && (!auto_stop_when_shooting_ || auto_shoot_active) && target_fov <= triggerbot_fov_) {
+            if (auto_stop_enabled_ && target_fov <= triggerbot_fov_) {
                 StopMovement();
             }
 
@@ -185,8 +184,7 @@ void Aim::Update() {
 
             if (auto_shoot_active && target_fov <= triggerbot_fov_) {
                 const std::uint32_t now = GetTickCountMs();
-                const std::uint32_t base_interval = auto_pistol_enabled_ || rapid_fire_enabled_ ? 80 : k_trigger_min_interval_ms;
-                const std::uint32_t fire_interval = std::max(base_interval, static_cast<std::uint32_t>(trigger_delay_ms_));
+                const std::uint32_t fire_interval = auto_pistol_enabled_ || rapid_fire_enabled_ ? 80 : k_trigger_min_interval_ms;
                 if (now - last_trigger_time_ >= fire_interval) {
                     last_trigger_time_ = now;
                     mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
@@ -270,7 +268,14 @@ void Aim::Update() {
 }
 
 void Aim::RenderOverlay() {
-    if (!esp_enabled_ || !Game::IsReady()) {
+    if (!Game::IsReady()) {
+        return;
+    }
+
+    const bool show_esp = esp_enabled_;
+    const bool show_bomb_overlay = bomb_overlay_enabled_;
+    const bool show_hostage_overlay = hostage_overlay_enabled_;
+    if (!show_esp && !show_bomb_overlay && !show_hostage_overlay) {
         return;
     }
 
@@ -278,13 +283,33 @@ void Aim::RenderOverlay() {
     const ViewAngles view = Game::GetViewAngles();
     const int local_team = Game::GetLocalTeam();
 
+    auto* draw_list = ImGui::GetWindowDrawList();
+    const ImU32 info_color = IM_COL32(200, 200, 255, 220);
+    const ImU32 warn_color = IM_COL32(255, 160, 80, 220);
+    const ImU32 green_color = IM_COL32(128, 255, 128, 220);
+
+    if (show_bomb_overlay) {
+        const bool bomb_active = Game::IsBombTicking();
+        const float remaining = Game::GetBombTimeRemaining();
+        const std::string bomb_text = bomb_active ?
+            "Bomb planted: " + std::to_string(static_cast<int>(remaining)) + "s" :
+            "Bomb planted: no";
+        draw_list->AddText(ImVec2(18.0f, 18.0f), bomb_active ? warn_color : info_color, bomb_text.c_str());
+    }
+
+    if (show_hostage_overlay) {
+        const bool carrying = Game::IsHostageCarried();
+        const std::string hostage_text = carrying ? "Hostage carried: yes" : "Hostage carried: no";
+        draw_list->AddText(ImVec2(18.0f, 38.0f), carrying ? green_color : info_color, hostage_text.c_str());
+    }
+
     for (int i = 1; i < 64; ++i) {
         const std::uintptr_t entity = Game::GetEntity(i);
         if (entity == 0 || entity == Game::GetLocalPlayerPtr()) {
             continue;
         }
 
-        if (!Game::IsValidTarget(entity, local_team)) {
+        if (!show_esp || !Game::IsValidTarget(entity, local_team)) {
             continue;
         }
 
@@ -364,9 +389,6 @@ void Aim::SetAutoPistolEnabled(bool enabled) { auto_pistol_enabled_ = enabled; }
 bool Aim::IsRapidFireEnabled() { return rapid_fire_enabled_; }
 void Aim::SetRapidFireEnabled(bool enabled) { rapid_fire_enabled_ = enabled; }
 
-int Aim::GetTriggerDelay() { return trigger_delay_ms_; }
-void Aim::SetTriggerDelay(int delay_ms) { trigger_delay_ms_ = delay_ms; }
-
 bool Aim::IsNoRecoilEnabled() { return no_recoil_enabled_; }
 void Aim::SetNoRecoilEnabled(bool enabled) { no_recoil_enabled_ = enabled; }
 
@@ -376,17 +398,17 @@ void Aim::SetNoSpreadEnabled(bool enabled) { no_spread_enabled_ = enabled; }
 bool Aim::IsNoScopeInaccuracyEnabled() { return no_scope_inaccuracy_enabled_; }
 void Aim::SetNoScopeInaccuracyEnabled(bool enabled) { no_scope_inaccuracy_enabled_ = enabled; }
 
-bool Aim::IsAutoStopWhenShootingEnabled() { return auto_stop_when_shooting_; }
-void Aim::SetAutoStopWhenShootingEnabled(bool enabled) { auto_stop_when_shooting_ = enabled; }
+bool Aim::IsBombOverlayEnabled() { return bomb_overlay_enabled_; }
+void Aim::SetBombOverlayEnabled(bool enabled) { bomb_overlay_enabled_ = enabled; }
+
+bool Aim::IsHostageOverlayEnabled() { return hostage_overlay_enabled_; }
+void Aim::SetHostageOverlayEnabled(bool enabled) { hostage_overlay_enabled_ = enabled; }
 
 bool Aim::IsAutoStrafeEnabled() { return auto_strafe_enabled_; }
 void Aim::SetAutoStrafeEnabled(bool enabled) { auto_strafe_enabled_ = enabled; }
 
 bool Aim::IsPanicKeyEnabled() { return panic_key_enabled_; }
 void Aim::SetPanicKeyEnabled(bool enabled) { panic_key_enabled_ = enabled; }
-
-int Aim::GetPanicKey() { return panic_key_; }
-void Aim::SetPanicKey(int virtual_key) { panic_key_ = virtual_key; }
 
 bool Aim::IsRecoilCompensationEnabled() { return recoil_compensation_enabled_; }
 void Aim::SetRecoilCompensationEnabled(bool enabled) { recoil_compensation_enabled_ = enabled; }
@@ -401,34 +423,3 @@ void Aim::SetFov(float fov) { fov_ = fov; }
 
 int Aim::GetAimKey() { return aim_key_; }
 void Aim::SetAimKey(int virtual_key) { aim_key_ = virtual_key; }
-
-void Aim::ResetDefaults() {
-    master_enabled_ = true;
-    enabled_ = false;
-    wallbang_enabled_ = false;
-    bunnyhop_enabled_ = false;
-    esp_enabled_ = true;
-    spinbot_enabled_ = false;
-    spinbot_speed_ = 6.0f;
-    triggerbot_enabled_ = false;
-    triggerbot_fov_ = 3.0f;
-    ragebot_enabled_ = false;
-    legit_mode_enabled_ = true;
-    aim_bone_ = Aim::Bone::Head;
-    auto_stop_enabled_ = true;
-    auto_stop_when_shooting_ = false;
-    auto_scope_enabled_ = false;
-    auto_pistol_enabled_ = false;
-    rapid_fire_enabled_ = false;
-    no_recoil_enabled_ = false;
-    no_spread_enabled_ = false;
-    no_scope_inaccuracy_enabled_ = false;
-    auto_strafe_enabled_ = false;
-    panic_key_enabled_ = true;
-    panic_key_ = VK_END;
-    trigger_delay_ms_ = 0;
-    aim_x_ = 4.0f;
-    aim_y_ = 4.0f;
-    fov_ = 8.0f;
-    aim_key_ = VK_XBUTTON2;
-}
