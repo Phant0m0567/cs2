@@ -17,6 +17,8 @@ public:
 
     static bool IsThroughWalls();
     static void SetThroughWalls(bool through_walls);
+    static bool IsHostageGlowEnabled();
+    static void SetHostageGlowEnabled(bool enabled);
 
     static std::uintptr_t GetGlowPointer();
     static int GetGlowCount();
@@ -30,4 +32,5 @@ private:
     static bool through_walls_;
     static std::uintptr_t last_glow_property_;
     static int last_glow_count_;
+    static bool hostage_glow_enabled_;
 };

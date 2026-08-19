@@ -92,9 +92,60 @@ void Menu::RenderAimTab() {
         Aim::SetRagebotEnabled(ragebot);
     }
 
-    bool recoil = Aim::IsRecoilCompensationEnabled();
-    if (ImGui::Checkbox("Enable recoil compensation", &recoil)) {
-        Aim::SetRecoilCompensationEnabled(recoil);
+    bool legit = Aim::IsLegitModeEnabled();
+    if (ImGui::Checkbox("Enable Legit mode", &legit)) {
+        Aim::SetLegitModeEnabled(legit);
+    }
+
+    const char* bone_names[] = { "Head", "Neck", "Chest", "Body", "Pelvis" };
+    int bone_index = static_cast<int>(Aim::GetAimBone());
+    if (ImGui::Combo("Aim bone", &bone_index, bone_names, IM_ARRAYSIZE(bone_names))) {
+        Aim::SetAimBone(static_cast<Aim::Bone>(bone_index));
+    }
+
+    bool auto_stop = Aim::IsAutoStopEnabled();
+    if (ImGui::Checkbox("Enable auto stop", &auto_stop)) {
+        Aim::SetAutoStopEnabled(auto_stop);
+    }
+
+    bool auto_scope = Aim::IsAutoScopeEnabled();
+    if (ImGui::Checkbox("Enable auto scope", &auto_scope)) {
+        Aim::SetAutoScopeEnabled(auto_scope);
+    }
+
+    bool auto_pistol = Aim::IsAutoPistolEnabled();
+    if (ImGui::Checkbox("Enable auto pistol", &auto_pistol)) {
+        Aim::SetAutoPistolEnabled(auto_pistol);
+    }
+
+    bool rapid_fire = Aim::IsRapidFireEnabled();
+    if (ImGui::Checkbox("Enable rapid fire", &rapid_fire)) {
+        Aim::SetRapidFireEnabled(rapid_fire);
+    }
+
+    bool no_recoil = Aim::IsNoRecoilEnabled();
+    if (ImGui::Checkbox("Enable no recoil", &no_recoil)) {
+        Aim::SetNoRecoilEnabled(no_recoil);
+    }
+
+    bool no_spread = Aim::IsNoSpreadEnabled();
+    if (ImGui::Checkbox("Enable no spread", &no_spread)) {
+        Aim::SetNoSpreadEnabled(no_spread);
+    }
+
+    bool no_scope = Aim::IsNoScopeInaccuracyEnabled();
+    if (ImGui::Checkbox("Enable no-scope inaccuracy", &no_scope)) {
+        Aim::SetNoScopeInaccuracyEnabled(no_scope);
+    }
+
+    bool auto_strafe = Aim::IsAutoStrafeEnabled();
+    if (ImGui::Checkbox("Enable auto strafe", &auto_strafe)) {
+        Aim::SetAutoStrafeEnabled(auto_strafe);
+    }
+
+    bool panic = Aim::IsPanicKeyEnabled();
+    if (ImGui::Checkbox("Enable panic key (END)", &panic)) {
+        Aim::SetPanicKeyEnabled(panic);
     }
 
     ImGui::Separator();
@@ -114,6 +165,11 @@ void Menu::RenderAimTab() {
     bool through_walls = Glow::IsThroughWalls();
     if (ImGui::Checkbox("Glow Through Walls", &through_walls)) {
         Glow::SetThroughWalls(through_walls);
+    }
+
+    bool hostage_glow = Glow::IsHostageGlowEnabled();
+    if (ImGui::Checkbox("Enable hostage glow", &hostage_glow)) {
+        Glow::SetHostageGlowEnabled(hostage_glow);
     }
 
     ImGui::Separator();
@@ -143,6 +199,11 @@ void Menu::RenderStatusTab() {
     } else {
         ImGui::Text("Best target index: none");
     }
+
+    ImGui::Separator();
+    ImGui::Text("Bomb planted: %s", Game::IsBombTicking() ? "yes" : "no");
+    ImGui::Text("Bomb time remaining: %.1f", Game::GetBombTimeRemaining());
+    ImGui::Text("Hostage carried: %s", Game::IsHostageCarried() ? "yes" : "no");
     ImGui::Separator();
     ImGui::TextWrapped(
         "Set offsets in include/Offsets.hpp after each CS2 update. "

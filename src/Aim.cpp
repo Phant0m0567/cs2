@@ -26,15 +26,31 @@ float Aim::spinbot_speed_ = 6.0f;
 bool Aim::triggerbot_enabled_ = false;
 float Aim::triggerbot_fov_ = 3.0f;
 bool Aim::ragebot_enabled_ = false;
+bool Aim::legit_mode_enabled_ = true;
+Aim::Bone Aim::aim_bone_ = Aim::Bone::Head;
+bool Aim::auto_stop_enabled_ = true;
+bool Aim::auto_stop_when_shooting_ = false;
+bool Aim::auto_scope_enabled_ = false;
+bool Aim::auto_pistol_enabled_ = false;
+bool Aim::rapid_fire_enabled_ = false;
+bool Aim::no_recoil_enabled_ = false;
+bool Aim::no_spread_enabled_ = false;
+bool Aim::no_scope_inaccuracy_enabled_ = false;
+bool Aim::auto_strafe_enabled_ = false;
+bool Aim::panic_key_enabled_ = true;
 bool Aim::recoil_compensation_enabled_ = false;
 
 float Aim::aim_x_ = 4.0f;
 float Aim::aim_y_ = 4.0f;
 float Aim::fov_ = 8.0f;
 int Aim::aim_key_ = VK_XBUTTON2;
+int Aim::panic_key_ = VK_END;
+int Aim::trigger_delay_ms_ = 0;
 
 std::uint32_t Aim::last_trigger_time_ = 0;
 std::uint32_t Aim::last_jump_time_ = 0;
+std::uint32_t Aim::last_fire_time_ = 0;
+std::uint32_t Aim::last_strafe_time_ = 0;
 
 static ViewAngles DirectionToAngles(const Vec3& direction) {
     const float hyp = std::sqrt(direction.x * direction.x + direction.y * direction.y);
@@ -68,6 +84,40 @@ static std::uint32_t GetTickCountMs() {
         std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
+static void StopMovement() {
+    const int keys[] = { 'W', 'A', 'S', 'D' };
+    for (int key : keys) {
+        keybd_event(static_cast<BYTE>(key), 0, KEYEVENTF_KEYUP, 0);
+    }
+}
+
+static bool IsWeaponScoped(std::uintptr_t local_player_ptr) {
+    if (local_player_ptr == 0) {
+        return false;
+    }
+    if (!Memory::IsReadable(local_player_ptr + Offsets::m_bIsScoped, sizeof(bool))) {
+        return false;
+    }
+    return Memory::Read<bool>(local_player_ptr + Offsets::m_bIsScoped);
+}
+
+static Vec3 GetBoneOffset(Aim::Bone bone) {
+    switch (bone) {
+    case Aim::Bone::Head:
+        return {0.0f, 0.0f, 64.0f};
+    case Aim::Bone::Neck:
+        return {0.0f, 0.0f, 56.0f};
+    case Aim::Bone::Chest:
+        return {0.0f, 0.0f, 45.0f};
+    case Aim::Bone::Body:
+        return {0.0f, 0.0f, 50.0f};
+    case Aim::Bone::Pelvis:
+        return {0.0f, 0.0f, 20.0f};
+    default:
+        return {0.0f, 0.0f, 64.0f};
+    }
+}
+
 static void DoBunnyhop() {
     const std::uint32_t now = GetTickCountMs();
     if (now - Aim::last_jump_time_ < 140) {
@@ -92,38 +142,84 @@ void Aim::Update() {
     const bool auto_shoot_active = triggerbot_enabled_ || wallbang_active || rage_active;
     const bool bunnyhop_active = bunnyhop_enabled_ || rage_active;
 
-    const auto target = Game::GetBestTarget(fov_);
-    if (target.has_value()) {
-        const Vec3 delta = *target - eye;
-        ViewAngles aim_angles = DirectionToAngles(delta);
+    const auto target_index = Game::GetBestTargetIndex(fov_);
+    if (target_index.has_value()) {
+        const std::uintptr_t entity = Game::GetEntity(*target_index);
+        const auto origin = Game::GetEntityPosition(entity);
+        if (origin.has_value()) {
+            const Vec3 target_point = *origin + GetBoneOffset(aim_bone_);
+            const Vec3 delta = target_point - eye;
+            ViewAngles aim_angles = DirectionToAngles(delta);
 
-        if (recoil_compensation_enabled_) {
-            const Vec3 punch = Game::GetLocalViewPunch();
-            aim_angles.pitch -= punch.x;
-            aim_angles.yaw -= punch.y;
-        }
+            if (recoil_compensation_enabled_) {
+                const Vec3 punch = Game::GetLocalViewPunch();
+                aim_angles.pitch -= punch.x;
+                aim_angles.yaw -= punch.y;
+            }
 
-        if (rage_active) {
-            current = aim_angles;
-        } else if (wants_aim) {
-            current.yaw = ApproachAngle(current.yaw, aim_angles.yaw, aim_x_);
-            current.pitch = ApproachAngle(current.pitch, aim_angles.pitch, aim_y_);
-        }
+            if (rage_active) {
+                current = aim_angles;
+            } else if (wants_aim) {
+                const float smooth = legit_mode_enabled_ ? std::max(aim_x_, aim_y_) : 1.0f;
+                current.yaw = ApproachAngle(current.yaw, aim_angles.yaw, smooth);
+                current.pitch = ApproachAngle(current.pitch, aim_angles.pitch, smooth);
+            }
 
-        if (spinbot_enabled_) {
-            current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
-        }
+            if (spinbot_enabled_) {
+                current.yaw = NormalizeYaw(current.yaw + spinbot_speed_);
+            }
 
-        const float yaw_diff = std::abs(NormalizeYaw(aim_angles.yaw - current.yaw));
-        const float pitch_diff = std::abs(aim_angles.pitch - current.pitch);
-        const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
+            const float yaw_diff = std::abs(NormalizeYaw(aim_angles.yaw - current.yaw));
+            const float pitch_diff = std::abs(aim_angles.pitch - current.pitch);
+            const float target_fov = std::sqrt(yaw_diff * yaw_diff + pitch_diff * pitch_diff);
 
-        if (auto_shoot_active && target_fov <= triggerbot_fov_) {
-            const std::uint32_t now = GetTickCountMs();
-            if (now - last_trigger_time_ >= k_trigger_min_interval_ms) {
-                last_trigger_time_ = now;
-                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+            if (auto_stop_enabled_ && (!auto_stop_when_shooting_ || auto_shoot_active) && target_fov <= triggerbot_fov_) {
+                StopMovement();
+            }
+
+            if (auto_scope_enabled_ && !IsWeaponScoped(Game::GetLocalPlayerPtr())) {
+                keybd_event(VK_RBUTTON, 0, 0, 0);
+            } else {
+                keybd_event(VK_RBUTTON, 0, KEYEVENTF_KEYUP, 0);
+            }
+
+            if (auto_shoot_active && target_fov <= triggerbot_fov_) {
+                const std::uint32_t now = GetTickCountMs();
+                const std::uint32_t base_interval = auto_pistol_enabled_ || rapid_fire_enabled_ ? 80 : k_trigger_min_interval_ms;
+                const std::uint32_t fire_interval = std::max(base_interval, static_cast<std::uint32_t>(trigger_delay_ms_));
+                if (now - last_trigger_time_ >= fire_interval) {
+                    last_trigger_time_ = now;
+                    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+                    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+                }
+            }
+
+            if (no_recoil_enabled_ || no_spread_enabled_ || no_scope_inaccuracy_enabled_) {
+                const std::uintptr_t weapon = Game::GetActiveWeaponPtr();
+                if (weapon != 0) {
+                    if (no_recoil_enabled_) {
+                        if (Memory::IsReadable(weapon + Offsets::m_iRecoilIndex, sizeof(int))) {
+                            Memory::Write<int>(weapon + Offsets::m_iRecoilIndex, 0);
+                        }
+                        if (Memory::IsReadable(weapon + Offsets::m_flRecoilIndex, sizeof(float))) {
+                            Memory::Write<float>(weapon + Offsets::m_flRecoilIndex, 0.0f);
+                        }
+                    }
+                    if (no_spread_enabled_ || no_scope_inaccuracy_enabled_) {
+                        const bool should_reset_inaccuracy = no_spread_enabled_ || (no_scope_inaccuracy_enabled_ && !IsWeaponScoped(Game::GetLocalPlayerPtr()));
+                        if (should_reset_inaccuracy) {
+                            if (Memory::IsReadable(weapon + Offsets::m_fAccuracyPenalty, sizeof(float))) {
+                                Memory::Write<float>(weapon + Offsets::m_fAccuracyPenalty, 0.0f);
+                            }
+                            if (Memory::IsReadable(weapon + Offsets::m_flTurningInaccuracy, sizeof(float))) {
+                                Memory::Write<float>(weapon + Offsets::m_flTurningInaccuracy, 0.0f);
+                            }
+                            if (Memory::IsReadable(weapon + Offsets::m_flTurningInaccuracyDelta, sizeof(float))) {
+                                Memory::Write<float>(weapon + Offsets::m_flTurningInaccuracyDelta, 0.0f);
+                            }
+                        }
+                    }
+                }
             }
         }
     } else if (rage_active || spinbot_enabled_) {
@@ -132,6 +228,35 @@ void Aim::Update() {
 
     if (bunnyhop_active) {
         DoBunnyhop();
+    }
+
+    if (auto_strafe_enabled_ && !Game::IsOnGround()) {
+        const std::uint32_t now = GetTickCountMs();
+        if (now - last_strafe_time_ > 90) {
+            last_strafe_time_ = now;
+            static bool strafe_left = false;
+            const BYTE key = strafe_left ? 'A' : 'D';
+            keybd_event(key, 0, 0, 0);
+            keybd_event(key, 0, KEYEVENTF_KEYUP, 0);
+            strafe_left = !strafe_left;
+        }
+    }
+
+    if (panic_key_enabled_ && (GetAsyncKeyState(VK_END) & 1)) {
+        master_enabled_ = false;
+        enabled_ = false;
+        wallbang_enabled_ = false;
+        bunnyhop_enabled_ = false;
+        esp_enabled_ = false;
+        spinbot_enabled_ = false;
+        triggerbot_enabled_ = false;
+        ragebot_enabled_ = false;
+        auto_scope_enabled_ = false;
+        auto_pistol_enabled_ = false;
+        rapid_fire_enabled_ = false;
+        no_recoil_enabled_ = false;
+        no_spread_enabled_ = false;
+        auto_strafe_enabled_ = false;
     }
 
     if (current.pitch > 89.0f) {
@@ -221,6 +346,48 @@ void Aim::SetTriggerbotFov(float fov) { triggerbot_fov_ = fov; }
 bool Aim::IsRagebotEnabled() { return ragebot_enabled_; }
 void Aim::SetRagebotEnabled(bool enabled) { ragebot_enabled_ = enabled; }
 
+bool Aim::IsLegitModeEnabled() { return legit_mode_enabled_; }
+void Aim::SetLegitModeEnabled(bool enabled) { legit_mode_enabled_ = enabled; }
+
+Aim::Bone Aim::GetAimBone() { return aim_bone_; }
+void Aim::SetAimBone(Bone bone) { aim_bone_ = bone; }
+
+bool Aim::IsAutoStopEnabled() { return auto_stop_enabled_; }
+void Aim::SetAutoStopEnabled(bool enabled) { auto_stop_enabled_ = enabled; }
+
+bool Aim::IsAutoScopeEnabled() { return auto_scope_enabled_; }
+void Aim::SetAutoScopeEnabled(bool enabled) { auto_scope_enabled_ = enabled; }
+
+bool Aim::IsAutoPistolEnabled() { return auto_pistol_enabled_; }
+void Aim::SetAutoPistolEnabled(bool enabled) { auto_pistol_enabled_ = enabled; }
+
+bool Aim::IsRapidFireEnabled() { return rapid_fire_enabled_; }
+void Aim::SetRapidFireEnabled(bool enabled) { rapid_fire_enabled_ = enabled; }
+
+int Aim::GetTriggerDelay() { return trigger_delay_ms_; }
+void Aim::SetTriggerDelay(int delay_ms) { trigger_delay_ms_ = delay_ms; }
+
+bool Aim::IsNoRecoilEnabled() { return no_recoil_enabled_; }
+void Aim::SetNoRecoilEnabled(bool enabled) { no_recoil_enabled_ = enabled; }
+
+bool Aim::IsNoSpreadEnabled() { return no_spread_enabled_; }
+void Aim::SetNoSpreadEnabled(bool enabled) { no_spread_enabled_ = enabled; }
+
+bool Aim::IsNoScopeInaccuracyEnabled() { return no_scope_inaccuracy_enabled_; }
+void Aim::SetNoScopeInaccuracyEnabled(bool enabled) { no_scope_inaccuracy_enabled_ = enabled; }
+
+bool Aim::IsAutoStopWhenShootingEnabled() { return auto_stop_when_shooting_; }
+void Aim::SetAutoStopWhenShootingEnabled(bool enabled) { auto_stop_when_shooting_ = enabled; }
+
+bool Aim::IsAutoStrafeEnabled() { return auto_strafe_enabled_; }
+void Aim::SetAutoStrafeEnabled(bool enabled) { auto_strafe_enabled_ = enabled; }
+
+bool Aim::IsPanicKeyEnabled() { return panic_key_enabled_; }
+void Aim::SetPanicKeyEnabled(bool enabled) { panic_key_enabled_ = enabled; }
+
+int Aim::GetPanicKey() { return panic_key_; }
+void Aim::SetPanicKey(int virtual_key) { panic_key_ = virtual_key; }
+
 bool Aim::IsRecoilCompensationEnabled() { return recoil_compensation_enabled_; }
 void Aim::SetRecoilCompensationEnabled(bool enabled) { recoil_compensation_enabled_ = enabled; }
 
@@ -234,3 +401,34 @@ void Aim::SetFov(float fov) { fov_ = fov; }
 
 int Aim::GetAimKey() { return aim_key_; }
 void Aim::SetAimKey(int virtual_key) { aim_key_ = virtual_key; }
+
+void Aim::ResetDefaults() {
+    master_enabled_ = true;
+    enabled_ = false;
+    wallbang_enabled_ = false;
+    bunnyhop_enabled_ = false;
+    esp_enabled_ = true;
+    spinbot_enabled_ = false;
+    spinbot_speed_ = 6.0f;
+    triggerbot_enabled_ = false;
+    triggerbot_fov_ = 3.0f;
+    ragebot_enabled_ = false;
+    legit_mode_enabled_ = true;
+    aim_bone_ = Aim::Bone::Head;
+    auto_stop_enabled_ = true;
+    auto_stop_when_shooting_ = false;
+    auto_scope_enabled_ = false;
+    auto_pistol_enabled_ = false;
+    rapid_fire_enabled_ = false;
+    no_recoil_enabled_ = false;
+    no_spread_enabled_ = false;
+    no_scope_inaccuracy_enabled_ = false;
+    auto_strafe_enabled_ = false;
+    panic_key_enabled_ = true;
+    panic_key_ = VK_END;
+    trigger_delay_ms_ = 0;
+    aim_x_ = 4.0f;
+    aim_y_ = 4.0f;
+    fov_ = 8.0f;
+    aim_key_ = VK_XBUTTON2;
+}

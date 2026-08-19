@@ -36,6 +36,13 @@ public:
     static bool HasGunGameImmunity(std::uintptr_t entity);
     static bool IsEntityAlive(std::uintptr_t entity);
     static Vec3 GetLocalViewPunch();
+    static std::uintptr_t GetActiveWeaponPtr();
+    static bool IsOnGround();
+    static std::uintptr_t GetPlantedC4Ptr();
+    static bool IsBombTicking();
+    static float GetBombTimeRemaining();
+    static bool IsHostageCarried();
+    static std::uintptr_t GetCarriedHostagePtr();
 
     static bool WorldToScreen(const Vec3& world_pos, ImVec2& screen_pos);
 

@@ -215,6 +215,104 @@ Vec3 Game::GetLocalViewPunch() {
     return Memory::Read<Vec3>(camera_services + Offsets::m_vec_cs_view_punch);
 }
 
+std::uintptr_t Game::GetActiveWeaponPtr() {
+    if (local_player_ptr_ == 0 || !Memory::IsReadable(local_player_ptr_ + Offsets::m_pWeaponServices, sizeof(std::uintptr_t))) {
+        return 0;
+    }
+
+    const std::uintptr_t weapon_services = Memory::Read<std::uintptr_t>(local_player_ptr_ + Offsets::m_pWeaponServices);
+    if (weapon_services == 0 || !Memory::IsReadable(weapon_services + Offsets::m_hActiveWeapon, sizeof(std::uintptr_t))) {
+        return 0;
+    }
+
+    const std::uintptr_t handle = Memory::Read<std::uintptr_t>(weapon_services + Offsets::m_hActiveWeapon);
+    if (handle == 0) {
+        return 0;
+    }
+
+    const int index = static_cast<int>(handle & 0xFFF);
+    if (index <= 0 || index >= 64) {
+        return 0;
+    }
+
+    return GetEntity(index);
+}
+
+bool Game::IsOnGround() {
+    if (local_player_ptr_ == 0 || !Memory::IsReadable(local_player_ptr_ + Offsets::m_fFlags, sizeof(std::uint32_t))) {
+        return false;
+    }
+
+    const std::uint32_t flags = Memory::Read<std::uint32_t>(local_player_ptr_ + Offsets::m_fFlags);
+    return (flags & 1u) != 0;
+}
+
+std::uintptr_t Game::GetPlantedC4Ptr() {
+    if (client_base_ == 0 || Offsets::planted_c4 == 0) {
+        return 0;
+    }
+
+    const std::uintptr_t planted_c4_ptr = Memory::Read<std::uintptr_t>(client_base_ + Offsets::planted_c4);
+    if (planted_c4_ptr == 0) {
+        return 0;
+    }
+
+    return planted_c4_ptr;
+}
+
+bool Game::IsBombTicking() {
+    const std::uintptr_t bomb_ptr = GetPlantedC4Ptr();
+    if (bomb_ptr == 0 || !Memory::IsReadable(bomb_ptr + Offsets::m_bBombTicking, sizeof(bool))) {
+        return false;
+    }
+
+    return Memory::Read<bool>(bomb_ptr + Offsets::m_bBombTicking);
+}
+
+float Game::GetBombTimeRemaining() {
+    const std::uintptr_t bomb_ptr = GetPlantedC4Ptr();
+    if (bomb_ptr == 0) {
+        return 0.0f;
+    }
+
+    if (Memory::IsReadable(bomb_ptr + Offsets::m_flTimerLength, sizeof(float))) {
+        return Memory::Read<float>(bomb_ptr + Offsets::m_flTimerLength);
+    }
+
+    if (Memory::IsReadable(bomb_ptr + Offsets::m_flC4Blow, sizeof(float))) {
+        return Memory::Read<float>(bomb_ptr + Offsets::m_flC4Blow);
+    }
+
+    return 0.0f;
+}
+
+std::uintptr_t Game::GetCarriedHostagePtr() {
+    if (local_player_ptr_ == 0 || !Memory::IsReadable(local_player_ptr_ + Offsets::m_pHostageServices, sizeof(std::uintptr_t))) {
+        return 0;
+    }
+
+    const std::uintptr_t hostage_service = Memory::Read<std::uintptr_t>(local_player_ptr_ + Offsets::m_pHostageServices);
+    if (hostage_service == 0 || !Memory::IsReadable(hostage_service + Offsets::m_hCarriedHostage, sizeof(std::uintptr_t))) {
+        return 0;
+    }
+
+    const std::uintptr_t handle = Memory::Read<std::uintptr_t>(hostage_service + Offsets::m_hCarriedHostage);
+    if (handle == 0) {
+        return 0;
+    }
+
+    const int index = static_cast<int>(handle & 0xFFF);
+    if (index > 0 && index < 64) {
+        return GetEntity(index);
+    }
+
+    return handle;
+}
+
+bool Game::IsHostageCarried() {
+    return GetCarriedHostagePtr() != 0;
+}
+
 std::optional<int> Game::GetBestTargetIndex(float fov_degrees) {
     if (!IsReady() || entity_list_ptr_ == 0) {
         return std::nullopt;

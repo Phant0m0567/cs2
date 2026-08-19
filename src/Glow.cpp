@@ -23,6 +23,7 @@ float Glow::green_ = 0.0f;
 float Glow::blue_ = 1.0f;
 float Glow::alpha_ = 0.6f;
 bool Glow::through_walls_ = true;
+bool Glow::hostage_glow_enabled_ = false;
 std::uintptr_t Glow::last_glow_property_ = 0;
 int Glow::last_glow_count_ = 0;
 
@@ -54,6 +55,24 @@ void Glow::Update() {
         Memory::Write<bool>(glow_property + kGlowHighlightOffset, true);
         Memory::Write<bool>(glow_property + kGlowEnabledOffset, true);
     }
+
+    if (hostage_glow_enabled_) {
+        const std::uintptr_t hostage = Game::GetCarriedHostagePtr();
+        if (hostage != 0) {
+            const std::uintptr_t glow_property = hostage + Offsets::m_Glow;
+            if (Memory::IsReadable(glow_property, kGlowPropertySize)) {
+                last_glow_property_ = glow_property;
+                last_glow_count_++;
+                Memory::Write<Vec3>(glow_property + kGlowColorOffset, {1.0f, 1.0f, 0.0f});
+                Memory::Write<float>(glow_property + kGlowAlphaOffset, alpha_);
+                Memory::Write<int>(glow_property + kGlowTypeOffset, through_walls_ ? 2 : 0);
+                Memory::Write<int>(glow_property + kGlowTeamOffset, 0);
+                Memory::Write<Vec3>(glow_property + kGlowColorOverrideOffset, {1.0f, 1.0f, 0.0f});
+                Memory::Write<bool>(glow_property + kGlowHighlightOffset, true);
+                Memory::Write<bool>(glow_property + kGlowEnabledOffset, true);
+            }
+        }
+    }
 }
 
 bool Glow::IsEnabled() {
@@ -62,6 +81,14 @@ bool Glow::IsEnabled() {
 
 void Glow::SetEnabled(bool enabled) {
     enabled_ = enabled;
+}
+
+bool Glow::IsHostageGlowEnabled() {
+    return hostage_glow_enabled_;
+}
+
+void Glow::SetHostageGlowEnabled(bool enabled) {
+    hostage_glow_enabled_ = enabled;
 }
 
 std::uintptr_t Glow::GetGlowPointer() {
