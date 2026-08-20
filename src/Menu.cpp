@@ -292,7 +292,7 @@ void Menu::Render() {
 
     ImGui::SetNextWindowSize(ImVec2(420.0f, 360.0f), ImGuiCond_FirstUseEver);
 
-    if (ImGui::Begin("cs2_math", &visible_, ImGuiWindowFlags_NoCollapse)) {
+    if (ImGui::Begin("cs2-client", &visible_, ImGuiWindowFlags_NoCollapse)) {
         if (ImGui::BeginTabBar("MainTabs")) {
             if (ImGui::BeginTabItem("Aim")) {
                 RenderAimTab();

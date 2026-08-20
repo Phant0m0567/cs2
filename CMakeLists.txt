@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(NOT WIN32)
-    message(FATAL_ERROR "cs2_math is Windows-only (CS2 runs on Windows x64).")
+    message(FATAL_ERROR "cs2-client is Windows-only (CS2 runs on Windows x64).")
 endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR "Build as x64. CS2 is a 64-bit process.")
 endif()
 
-project(cs2_math LANGUAGES CXX C)
+project(cs2-client LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -61,7 +61,7 @@ target_include_directories(minhook_lib PUBLIC
     ${minhook_SOURCE_DIR}/include
 )
 
-add_library(cs2_math SHARED
+add_library(cs2-client SHARED
     src/dllmain.cpp
     src/Entry.cpp
     src/Config.cpp
@@ -72,15 +72,15 @@ add_library(cs2_math SHARED
     src/Game.cpp
 )
 
-target_include_directories(cs2_math PRIVATE include)
+target_include_directories(cs2-client PRIVATE include)
 
-target_compile_definitions(cs2_math PRIVATE
+target_compile_definitions(cs2-client PRIVATE
     WIN32_LEAN_AND_MEAN
     NOMINMAX
     _CRT_SECURE_NO_WARNINGS
 )
 
-target_link_libraries(cs2_math PRIVATE
+target_link_libraries(cs2-client PRIVATE
     imgui_lib
     minhook_lib
     psapi
@@ -89,19 +89,19 @@ target_link_libraries(cs2_math PRIVATE
 )
 
 if(MSVC)
-    target_compile_options(cs2_math PRIVATE
+    target_compile_options(cs2-client PRIVATE
         /W4
         /O2
         /fp:fast
     )
 
-    target_link_options(cs2_math PRIVATE
+    target_link_options(cs2-client PRIVATE
         /DYNAMICBASE
         /NXCOMPAT
     )
 endif()
 
-set_target_properties(cs2_math PROPERTIES
-    OUTPUT_NAME "cs2_math"
+set_target_properties(cs2-client PROPERTIES
+    OUTPUT_NAME "cs2-client"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )

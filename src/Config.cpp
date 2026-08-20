@@ -7,13 +7,13 @@
 #include <string>
 
 namespace {
-    const char* kConfigFileName = "cs2_math.cfg";
+    const char* kConfigFileName = "cs2-client.cfg";
 
     std::string GetProfileFileName(const std::string& profile_name) {
         if (profile_name.empty() || profile_name == "default") {
             return std::string(kConfigFileName);
         }
-        return "cs2_math_" + profile_name + ".cfg";
+        return "cs2-client_" + profile_name + ".cfg";
     }
 
     bool ParseBool(const std::string& value) {

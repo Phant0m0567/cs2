@@ -8,7 +8,7 @@ Windows x64 DLL cheat for CS2 with an ImGui overlay and in-game features.
 - The overlay renders menu controls and ESP text/boxes.
 - Game state is read from client memory using hardcoded offsets in `include/Offsets.hpp`.
 - Aim features work by reading local view angles and writing adjusted view angles in-game.
-- Config profiles are saved to `cs2_math_<profile>.cfg` and loaded from the same folder.
+- Config profiles are saved to `cs2-client_<profile>.cfg` and loaded from the same folder.
 
 ## Requirements
 
@@ -26,14 +26,14 @@ cmake --build build --config Release
 
 Output DLL:
 
-- `build/bin/Release/cs2_math.dll`
+- `build/bin/Release/cs2-client.dll`
 
 Alternatively, open the project in Visual Studio or CLion and build the `Release` configuration.
 
 ## Run / Inject
 
 1. Start CS2 and wait for the main menu or a match.
-2. Inject `cs2_math.dll` using an external DLL injector that supports `LoadLibrary`.
+2. Inject `cs2-client.dll` using an external DLL injector that supports `LoadLibrary`.
 3. Wait a few seconds for hooks and pointers to initialize.
 4. Press **INSERT** to open the cheat menu.
 

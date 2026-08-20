@@ -213,7 +213,7 @@ void Renderer::RenderFrame(IDXGISwapChain* swap_chain) {
             ImGuiWindowFlags_AlwaysAutoResize |
             ImGuiWindowFlags_NoInputs |
             ImGuiWindowFlags_NoFocusOnAppearing);
-        ImGui::Text("cs2_math | INSERT");
+        ImGui::Text("cs2-client | INSERT");
         ImGui::End();
     }
 
