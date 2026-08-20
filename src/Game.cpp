@@ -180,6 +180,27 @@ int Game::GetEntityTeam(std::uintptr_t entity) {
     return static_cast<int>(Memory::Read<std::uint8_t>(entity + Offsets::m_i_team_num));
 }
 
+int Game::GetEntityArmor(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_i_armor_value, sizeof(int))) {
+        return 0;
+    }
+    return Memory::Read<int>(entity + Offsets::m_i_armor_value);
+}
+
+std::uint32_t Game::GetEntityWeaponHash(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_unWeaponHash, sizeof(std::uint32_t))) {
+        return 0;
+    }
+    return Memory::Read<std::uint32_t>(entity + Offsets::m_unWeaponHash);
+}
+
+bool Game::IsEntitySpotted(std::uintptr_t entity) {
+    if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_entity_spotted_state, sizeof(std::uint32_t))) {
+        return false;
+    }
+    return Memory::Read<std::uint32_t>(entity + Offsets::m_entity_spotted_state) != 0;
+}
+
 bool Game::IsEntityDormant(std::uintptr_t entity) {
     if (entity == 0 || !Memory::IsReadable(entity + Offsets::m_bDormant, sizeof(bool))) {
         return false;
@@ -236,6 +257,22 @@ std::uintptr_t Game::GetActiveWeaponPtr() {
     }
 
     return GetEntity(index);
+}
+
+int Game::GetLocalWeaponClip() {
+    const std::uintptr_t weapon = GetActiveWeaponPtr();
+    if (weapon == 0 || !Memory::IsReadable(weapon + Offsets::m_iClip1, sizeof(int))) {
+        return 0;
+    }
+    return Memory::Read<int>(weapon + Offsets::m_iClip1);
+}
+
+int Game::GetLocalWeaponReserve() {
+    const std::uintptr_t weapon = GetActiveWeaponPtr();
+    if (weapon == 0 || !Memory::IsReadable(weapon + Offsets::m_pReserveAmmo, sizeof(int))) {
+        return 0;
+    }
+    return Memory::Read<int>(weapon + Offsets::m_pReserveAmmo);
 }
 
 bool Game::IsOnGround() {

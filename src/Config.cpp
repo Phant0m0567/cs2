@@ -74,6 +74,12 @@ bool Config::LoadFromFile(const std::string& file_name) {
             Aim::SetNoSpreadEnabled(ParseBool(line.substr(11)));
         } else if (line.rfind("no_scope_inaccuracy=", 0) == 0) {
             Aim::SetNoScopeInaccuracyEnabled(ParseBool(line.substr(20)));
+        } else if (line.rfind("visible_only_esp=", 0) == 0) {
+            Aim::SetVisibleOnlyEspEnabled(ParseBool(line.substr(17)));
+        } else if (line.rfind("show_weapon_info=", 0) == 0) {
+            Aim::SetShowWeaponInfoEnabled(ParseBool(line.substr(17)));
+        } else if (line.rfind("show_distance=", 0) == 0) {
+            Aim::SetShowDistanceEnabled(ParseBool(line.substr(14)));
         } else if (line.rfind("bomb_overlay=", 0) == 0) {
             Aim::SetBombOverlayEnabled(ParseBool(line.substr(13)));
         } else if (line.rfind("hostage_overlay=", 0) == 0) {
@@ -139,6 +145,9 @@ void Config::SaveToFile(const std::string& file_name) {
     config << "no_recoil=" << (Aim::IsNoRecoilEnabled() ? 1 : 0) << '\n';
     config << "no_spread=" << (Aim::IsNoSpreadEnabled() ? 1 : 0) << '\n';
     config << "no_scope_inaccuracy=" << (Aim::IsNoScopeInaccuracyEnabled() ? 1 : 0) << '\n';
+    config << "visible_only_esp=" << (Aim::IsVisibleOnlyEspEnabled() ? 1 : 0) << '\n';
+    config << "show_weapon_info=" << (Aim::IsShowWeaponInfoEnabled() ? 1 : 0) << '\n';
+    config << "show_distance=" << (Aim::IsShowDistanceEnabled() ? 1 : 0) << '\n';
     config << "bomb_overlay=" << (Aim::IsBombOverlayEnabled() ? 1 : 0) << '\n';
     config << "hostage_overlay=" << (Aim::IsHostageOverlayEnabled() ? 1 : 0) << '\n';
     config << "auto_strafe=" << (Aim::IsAutoStrafeEnabled() ? 1 : 0) << '\n';

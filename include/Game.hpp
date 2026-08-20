@@ -32,11 +32,16 @@ public:
     static int GetLocalHealth();
     static int GetEntityHealth(std::uintptr_t entity);
     static int GetEntityTeam(std::uintptr_t entity);
+    static int GetEntityArmor(std::uintptr_t entity);
+    static std::uint32_t GetEntityWeaponHash(std::uintptr_t entity);
+    static bool IsEntitySpotted(std::uintptr_t entity);
     static bool IsEntityDormant(std::uintptr_t entity);
     static bool HasGunGameImmunity(std::uintptr_t entity);
     static bool IsEntityAlive(std::uintptr_t entity);
     static Vec3 GetLocalViewPunch();
     static std::uintptr_t GetActiveWeaponPtr();
+    static int GetLocalWeaponClip();
+    static int GetLocalWeaponReserve();
     static bool IsOnGround();
     static std::uintptr_t GetPlantedC4Ptr();
     static bool IsBombTicking();

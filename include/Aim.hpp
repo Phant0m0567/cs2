@@ -53,6 +53,12 @@ public:
     static void SetNoSpreadEnabled(bool enabled);
     static bool IsNoScopeInaccuracyEnabled();
     static void SetNoScopeInaccuracyEnabled(bool enabled);
+    static bool IsVisibleOnlyEspEnabled();
+    static void SetVisibleOnlyEspEnabled(bool enabled);
+    static bool IsShowWeaponInfoEnabled();
+    static void SetShowWeaponInfoEnabled(bool enabled);
+    static bool IsShowDistanceEnabled();
+    static void SetShowDistanceEnabled(bool enabled);
     static bool IsBombOverlayEnabled();
     static void SetBombOverlayEnabled(bool enabled);
     static bool IsHostageOverlayEnabled();
@@ -93,6 +99,9 @@ private:
     static bool no_recoil_enabled_;
     static bool no_spread_enabled_;
     static bool no_scope_inaccuracy_enabled_;
+    static bool visible_only_esp_enabled_;
+    static bool show_weapon_info_enabled_;
+    static bool show_distance_enabled_;
     static bool auto_strafe_enabled_;
     static bool panic_key_enabled_;
 

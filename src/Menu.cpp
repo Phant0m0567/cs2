@@ -225,6 +225,21 @@ void Menu::RenderSettingsTab() {
     }
 
     ImGui::Separator();
+    bool visible_only = Aim::IsVisibleOnlyEspEnabled();
+    if (ImGui::Checkbox("Visible-only ESP", &visible_only)) {
+        Aim::SetVisibleOnlyEspEnabled(visible_only);
+    }
+
+    bool show_weapon_info = Aim::IsShowWeaponInfoEnabled();
+    if (ImGui::Checkbox("Show weapon info", &show_weapon_info)) {
+        Aim::SetShowWeaponInfoEnabled(show_weapon_info);
+    }
+
+    bool show_distance = Aim::IsShowDistanceEnabled();
+    if (ImGui::Checkbox("Show distance", &show_distance)) {
+        Aim::SetShowDistanceEnabled(show_distance);
+    }
+
     bool bomb_overlay = Aim::IsBombOverlayEnabled();
     if (ImGui::Checkbox("Enable bomb overlay", &bomb_overlay)) {
         Aim::SetBombOverlayEnabled(bomb_overlay);

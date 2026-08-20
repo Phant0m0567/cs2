@@ -1,16 +1,21 @@
-# this was a test i was doing with quen code to see if ai could generate working cs2 cheats, i do not claim possesion of any of this code, this was just a sideproject i wanted to try.
-
 # cs2-cheat
 
+Windows x64 DLL cheat for CS2 with an ImGui overlay and in-game features.
 
-Windows x64 DLL with ImGui overlay, pattern scanning utilities, and aim helpers.
+## How it works
+
+- The DLL is injected into CS2 and hooks DirectX11 rendering.
+- The overlay renders menu controls and ESP text/boxes.
+- Game state is read from client memory using hardcoded offsets in `include/Offsets.hpp`.
+- Aim features work by reading local view angles and writing adjusted view angles in-game.
+- Config profiles are saved to `cs2_math_<profile>.cfg` and loaded from the same folder.
 
 ## Requirements
 
 - Windows 10/11 x64
-- Visual Studio 2022 (MSVC)
+- Visual Studio 2022 or newer (MSVC)
 - CMake 3.20+
-- CLion or Visual Studio
+- CS2 x64
 
 ## Build
 
@@ -19,30 +24,31 @@ cmake -B build -A x64 -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Output: `build/bin/Release/cs2_math.dll`
+Output DLL:
 
-CLion: open project, set toolchain to **Visual Studio x64**, build **Release**.
+- `build/bin/Release/cs2_math.dll`
 
-## Inject
+Alternatively, open the project in Visual Studio or CLion and build the `Release` configuration.
 
-1. Launch CS2 and reach the main menu.
-2. Inject `cs2_math.dll` with any LoadLibrary injector.
-3. Wait ~3 seconds for hooks to initialize.
-4. Press **INSERT** to open the menu.
+## Run / Inject
 
-## Menu
+1. Start CS2 and wait for the main menu or a match.
+2. Inject `cs2_math.dll` using an external DLL injector that supports `LoadLibrary`.
+3. Wait a few seconds for hooks and pointers to initialize.
+4. Press **INSERT** to open the cheat menu.
 
-| Tab | Contents |
-|-----|----------|
-| Aim | Enable aim, Aim X/Y smoothing, FOV |
-| Status | Hook status, game ready state |
-| Log | Injection and init messages |
+## Menu overview
 
-**Aim key:** Mouse 5 (side button) held while aim is enabled.
+- `Aim` tab: enable aimbot, smoothing, FOV, triggers, and no-recoil/spread options.
+- `Status` tab: shows game readiness, active target info, bomb/hostage state, and current hook status.
+- `Log` tab: displays injection and initialization messages.
+- `Settings` tab: profile save/load, visible-only ESP, weapon info, distance, and overlay toggles.
 
 ## Offsets
 
-CS2 updates break offsets. Before aim works, update `include/Offsets.hpp`:
+CS2 updates can break pointers. Update `include/Offsets.hpp` when the game changes.
+
+Key entries:
 
 ```cpp
 namespace Offsets {
@@ -52,21 +58,25 @@ namespace Offsets {
 }
 ```
 
-Use `Memory::FindPatternInModule("client.dll", "...")` to locate these after each game patch. The Status tab shows **Game ready: no** until offsets are valid.
+When offsets are invalid, the `Status` tab will usually show `Game ready: no`.
 
-## Aim X / Aim Y
+## Features
 
-- **Aim X** — horizontal (yaw) smoothing. Higher = slower, more human-like.
-- **Aim Y** — vertical (pitch) smoothing.
-- Value of `1.0` snaps instantly. Default is `4.0`.
+- Aimbot with smooth aim and rage modes
+- Triggerbot and rapid-fire support
+- No recoil, no spread, and no-scope inaccuracy removal
+- ESP boxes with health, armor, weapon hash, and distance
+- Visible-only ESP filtering
+- Bomb and hostage overlay indicators
+- Profile-based config save/load
 
-## Project layout
+## Project structure
 
 ```
-include/   headers (Vec2, Vec3, Memory, Menu, Aim, Game, Offsets)
-src/       implementation
+include/   headers (Aim, Game, Memory, Menu, Offsets, Vec2, Vec3)
+src/       implementation files
 ```
 
 ## Disclaimer
 
-For offline / `-insecure` local testing only. Do not use on VAC-secured servers.
+For offline or local testing only. Do not use on VAC-secured servers.

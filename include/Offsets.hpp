@@ -13,6 +13,9 @@ namespace Offsets {
     inline std::uintptr_t m_vec_view_offset = 0xE78;         // C_BaseModelEntity::m_vecViewOffset
     inline std::uintptr_t m_i_team_num = 0x3E7;              // C_BaseEntity::m_iTeamNum
     inline std::uintptr_t m_i_health = 0x34C;                // C_BaseEntity::m_iHealth
+    inline std::uintptr_t m_unWeaponHash = 0x5372;           // C_CSPlayerPawn::m_unWeaponHash
+    inline std::uintptr_t m_i_armor_value = 0x7332;          // C_CSPlayerPawn::m_ArmorValue
+    inline std::uintptr_t m_entity_spotted_state = 0x7264;    // C_CSPlayerPawn::m_entitySpottedState
     inline std::uintptr_t m_Glow = 0xDE0;                    // C_BaseModelEntity::m_Glow
     inline std::uintptr_t m_bDormant = 0x103;                // CGameSceneNode::m_bDormant
     inline std::uintptr_t m_bGunGameImmunity = 0x3258;       // C_CSPlayerPawn::m_bGunGameImmunity
@@ -31,6 +34,8 @@ namespace Offsets {
     inline std::uintptr_t m_flTurningInaccuracy = 0x6124;     // C_CSWeaponBase::m_flTurningInaccuracy
     inline std::uintptr_t m_flTurningInaccuracyDelta = 0x6108; // C_CSWeaponBase::m_flTurningInaccuracyDelta
     inline std::uintptr_t m_bInReload = 0x6164;               // C_CSWeaponBase::m_bInReload
+    inline std::uintptr_t m_iClip1 = 0x1700;                 // C_BasePlayerWeapon::m_iClip1
+    inline std::uintptr_t m_pReserveAmmo = 0x1708;           // C_BasePlayerWeapon::m_pReserveAmmo
     inline std::uintptr_t m_fFlags = 0x3F4;                   // C_BaseEntity::m_fFlags
     inline std::uintptr_t planted_c4 = 0x02373888;           // dwPlantedC4
     inline std::uintptr_t m_flC4Blow = 4560;                 // C_PlantedC4::m_flC4Blow

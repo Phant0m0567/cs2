@@ -35,6 +35,9 @@ bool Aim::rapid_fire_enabled_ = false;
 bool Aim::no_recoil_enabled_ = false;
 bool Aim::no_spread_enabled_ = false;
 bool Aim::no_scope_inaccuracy_enabled_ = false;
+bool Aim::visible_only_esp_enabled_ = false;
+bool Aim::show_weapon_info_enabled_ = true;
+bool Aim::show_distance_enabled_ = true;
 bool Aim::bomb_overlay_enabled_ = true;
 bool Aim::hostage_overlay_enabled_ = true;
 bool Aim::auto_strafe_enabled_ = false;
@@ -273,6 +276,9 @@ void Aim::RenderOverlay() {
     }
 
     const bool show_esp = esp_enabled_;
+    const bool show_visible_only = visible_only_esp_enabled_;
+    const bool show_weapon_info = show_weapon_info_enabled_;
+    const bool show_distance = show_distance_enabled_;
     const bool show_bomb_overlay = bomb_overlay_enabled_;
     const bool show_hostage_overlay = hostage_overlay_enabled_;
     if (!show_esp && !show_bomb_overlay && !show_hostage_overlay) {
@@ -312,6 +318,9 @@ void Aim::RenderOverlay() {
         if (!show_esp || !Game::IsValidTarget(entity, local_team)) {
             continue;
         }
+        if (show_visible_only && !Game::IsEntitySpotted(entity)) {
+            continue;
+        }
 
         const auto origin = Game::GetEntityPosition(entity);
         if (!origin.has_value()) {
@@ -333,11 +342,30 @@ void Aim::RenderOverlay() {
         const ImVec2 bottom_right{screen_head.x + width * 0.5f, screen_foot.y};
 
         const ImU32 box_color = IM_COL32(255, 64, 64, 220);
+        const ImU32 info_color = IM_COL32(255, 255, 255, 220);
+        const ImU32 secondary_color = IM_COL32(200, 200, 200, 200);
+
         ImGui::GetWindowDrawList()->AddRect(top_left, bottom_right, box_color, 0.0f, 0, 2.0f);
         ImGui::GetWindowDrawList()->AddLine(screen_head, screen_foot, box_color, 1.5f);
-        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 18.0f), IM_COL32(255, 255, 255, 220), "Enemy");
+        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 18.0f), info_color, "Enemy");
         const std::string health_text = "HP: " + std::to_string(Game::GetEntityHealth(entity));
         ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 34.0f), IM_COL32(255, 255, 64, 200), health_text.c_str());
+
+        if (show_distance) {
+            const float distance = eye.Distance(*origin);
+            const std::string distance_text = "D: " + std::to_string(static_cast<int>(distance));
+            ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 50.0f), secondary_color, distance_text.c_str());
+        }
+
+        if (show_weapon_info) {
+            const std::uint32_t weapon_hash = Game::GetEntityWeaponHash(entity);
+            const std::string weapon_text = "W: 0x" + std::to_string(weapon_hash);
+            ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 66.0f), secondary_color, weapon_text.c_str());
+        }
+
+        const int armor = Game::GetEntityArmor(entity);
+        const std::string armor_text = "AR: " + std::to_string(armor);
+        ImGui::GetWindowDrawList()->AddText(ImVec2(top_left.x, top_left.y - 82.0f), secondary_color, armor_text.c_str());
     }
 }
 
@@ -397,6 +425,15 @@ void Aim::SetNoSpreadEnabled(bool enabled) { no_spread_enabled_ = enabled; }
 
 bool Aim::IsNoScopeInaccuracyEnabled() { return no_scope_inaccuracy_enabled_; }
 void Aim::SetNoScopeInaccuracyEnabled(bool enabled) { no_scope_inaccuracy_enabled_ = enabled; }
+
+bool Aim::IsVisibleOnlyEspEnabled() { return visible_only_esp_enabled_; }
+void Aim::SetVisibleOnlyEspEnabled(bool enabled) { visible_only_esp_enabled_ = enabled; }
+
+bool Aim::IsShowWeaponInfoEnabled() { return show_weapon_info_enabled_; }
+void Aim::SetShowWeaponInfoEnabled(bool enabled) { show_weapon_info_enabled_ = enabled; }
+
+bool Aim::IsShowDistanceEnabled() { return show_distance_enabled_; }
+void Aim::SetShowDistanceEnabled(bool enabled) { show_distance_enabled_ = enabled; }
 
 bool Aim::IsBombOverlayEnabled() { return bomb_overlay_enabled_; }
 void Aim::SetBombOverlayEnabled(bool enabled) { bomb_overlay_enabled_ = enabled; }
