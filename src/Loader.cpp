@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <TlHelp32.h>
+#include <Shellapi.h>
 #include <cstdio>
+#include <cstring>
 #include <string>
 
 static DWORD FindProcessId(const char* process_name) {
@@ -44,10 +46,16 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const DWORD pid = FindProcessId(process_name);
+    DWORD pid = FindProcessId(process_name);
     if (pid == 0) {
-        std::printf("Process '%s' not found. Start CS2 first.\n", process_name);
-        return 1;
+        std::printf("Process '%s' not found. Launching CS2 via Steam...\n", process_name);
+        ShellExecuteA(nullptr, "open", "steam://rungameid/730", nullptr, nullptr, SW_SHOWNORMAL);
+        Sleep(10000);
+        pid = FindProcessId(process_name);
+        if (pid == 0) {
+            std::printf("Failed to start CS2 or find process '%s'.\n", process_name);
+            return 1;
+        }
     }
 
     const HANDLE process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION |

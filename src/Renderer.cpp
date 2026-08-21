@@ -198,7 +198,7 @@ void Renderer::RenderFrame(IDXGISwapChain* swap_chain) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Insert, false)) {
+    if (ImGui::IsKeyPressed(ImGuiKey_Insert, false) || ImGui::IsKeyPressed(ImGuiKey_GraveAccent, false)) {
         Menu::Toggle();
     }
 

@@ -51,13 +51,16 @@ If you use Visual Studio, open the project folder, select the `x64` toolchain, a
 build\bin\cs2-client-loader.exe
 ```
 
-- To specify a custom process or DLL path:
+- If CS2 is not running, the loader will attempt to launch it through Steam using `steam://rungameid/730`.
+- To specify a custom process name or DLL path:
 
 ```powershell
 build\bin\cs2-client-loader.exe cs2.exe cs2-client.dll
 ```
 
-- If CS2 process name is different, replace `cs2.exe` with the actual executable name.
+- If CS2 uses a different process name, replace `cs2.exe` with the actual executable name.
+
+- Once injected, press `` ` `` or `INSERT` in CS2 to open the draggable cheat menu.
 
 ## Deploy with ExLoader
 
