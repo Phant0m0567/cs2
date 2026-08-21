@@ -19,37 +19,55 @@ Windows x64 DLL cheat for CS2 with an ImGui overlay and in-game features.
 
 ## Build
 
-```bash
-cmake -B build -A x64 -DCMAKE_BUILD_TYPE=Release
+Open a Windows x64 developer command prompt in the project folder and run:
+
+```powershell
+cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Output DLL:
+Output:
 
-- `build/bin/Release/cs2-client.dll`
+- `build/bin/cs2-client.dll`
+- `build/bin/cs2-client-loader.exe`
 
-Alternatively, open the project in Visual Studio or CLion and build the `Release` configuration.
+If you use Visual Studio, open the project folder, select the `x64` toolchain, and build the `Release` configuration.
 
 ## Run / Inject
 
 1. Start CS2 and wait for the main menu or a match.
-2. Use one of these options to load the DLL:
-   - Inject `cs2-client.dll` with a standard `LoadLibrary` injector.
-   - Run the built loader EXE: `build\bin\cs2-client-loader.exe`.
-   - For ExLoader, select `cs2-client-loader.exe` or directly load `build\bin\cs2-client.dll`.
+2. Deploy one of these injection methods:
+   - Use `build\bin\cs2-client-loader.exe` to automatically inject `cs2-client.dll`.
+   - Use ExLoader and load `build\bin\cs2-client-loader.exe` as the executable.
+   - Alternatively, use ExLoader to load `build\bin\cs2-client.dll` directly if it supports DLL injection.
 3. Wait a few seconds for hooks and pointers to initialize.
 4. Press **INSERT** to open the cheat menu.
 
-## Loader usage
+## Deploy with loader
 
-- By default the loader tries to inject into `cs2.exe`.
-- You can override the target process and DLL path:
+- Run the loader from the command prompt or a launcher:
+
+```powershell
+build\bin\cs2-client-loader.exe
+```
+
+- To specify a custom process or DLL path:
 
 ```powershell
 build\bin\cs2-client-loader.exe cs2.exe cs2-client.dll
 ```
 
-- If CS2 uses a different process name, replace `cs2.exe` with that name.
+- If CS2 process name is different, replace `cs2.exe` with the actual executable name.
+
+## Deploy with ExLoader
+
+1. Open ExLoader.
+2. Choose the target process for injection (usually `cs2.exe`).
+3. Select one of these files:
+   - `build\bin\cs2-client-loader.exe` to run the loader executable
+   - `build\bin\cs2-client.dll` to inject the cheat DLL directly
+4. Start injection.
+5. Return to CS2 and press **INSERT** after injection.
 
 ## Menu overview
 
