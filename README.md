@@ -33,9 +33,23 @@ Alternatively, open the project in Visual Studio or CLion and build the `Release
 ## Run / Inject
 
 1. Start CS2 and wait for the main menu or a match.
-2. Inject `cs2-client.dll` using an external DLL injector that supports `LoadLibrary`.
+2. Use one of these options to load the DLL:
+   - Inject `cs2-client.dll` with a standard `LoadLibrary` injector.
+   - Run the built loader EXE: `build\bin\cs2-client-loader.exe`.
+   - For ExLoader, select `cs2-client-loader.exe` or directly load `build\bin\cs2-client.dll`.
 3. Wait a few seconds for hooks and pointers to initialize.
 4. Press **INSERT** to open the cheat menu.
+
+## Loader usage
+
+- By default the loader tries to inject into `cs2.exe`.
+- You can override the target process and DLL path:
+
+```powershell
+build\bin\cs2-client-loader.exe cs2.exe cs2-client.dll
+```
+
+- If CS2 uses a different process name, replace `cs2.exe` with that name.
 
 ## Menu overview
 
