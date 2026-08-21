@@ -88,8 +88,25 @@ target_link_libraries(cs2-client PRIVATE
     dxgi
 )
 
+add_executable(cs2-client-loader
+    src/Loader.cpp
+)
+
+target_compile_definitions(cs2-client-loader PRIVATE
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX
+    _CRT_SECURE_NO_WARNINGS
+)
+
+target_include_directories(cs2-client-loader PRIVATE include)
+
 if(MSVC)
     target_compile_options(cs2-client PRIVATE
+        /W4
+        /O2
+        /fp:fast
+    )
+    target_compile_options(cs2-client-loader PRIVATE
         /W4
         /O2
         /fp:fast
@@ -99,9 +116,18 @@ if(MSVC)
         /DYNAMICBASE
         /NXCOMPAT
     )
+    target_link_options(cs2-client-loader PRIVATE
+        /DYNAMICBASE
+        /NXCOMPAT
+    )
 endif()
 
 set_target_properties(cs2-client PROPERTIES
     OUTPUT_NAME "cs2-client"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+set_target_properties(cs2-client-loader PROPERTIES
+    OUTPUT_NAME "cs2-client-loader"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
